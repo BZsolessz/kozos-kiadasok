@@ -5,6 +5,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+# Mobilbarát oldalbeállítás
+st.set_page_config(page_title="Közös Kiadások", page_icon="💑", layout="centered")
+
 # Lehúzós oldalfrissítés (Pull-to-Refresh) tiltása mobilon
 st.markdown(
     """
@@ -17,8 +20,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-# Mobilbarát oldalbeállítás
-st.set_page_config(page_title="Közös Kiadások", page_icon="💑", layout="centered")
+
 st.title("💑 Közös Kiadáskövető")
 
 # --- CSATLAKOZÁS A GOOGLE TÁBLÁZATHOZ ---
@@ -107,28 +109,3 @@ with tab_stat:
         col2.metric("Vivien fizette", f"{vivien_ossz:,.0f} Ft".replace(",", " "))
 
         st.divider()
-
-        # Automatikus 50-50% elszámolás kalkulátor
-        kulonbseg = abs(zsolt_ossz - fele)
-        if zsolt_ossz > vivien_ossz:
-            st.info(f"⚖️ **Elszámolás (50-50%):** Vivien **{kulonbseg:,.0f} Ft**-tal tartozik neked.".replace(",", " "))
-        elif vivien_ossz > zsolt_ossz:
-            st.info(f"⚖️ **Elszámolás (50-50%):** Te **{kulonbseg:,.0f} Ft**-tal tartozol Viviennek.".replace(",", " "))
-        else:
-            st.success("⚖️ **Elszámolás:** Teljesen egálban vagytok!")
-
-        # Kördiagram kategóriánként
-        kat_df = df.groupby("Kategória", as_index=False)["Összeg"].sum()
-        fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
-        fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
-        st.plotly_chart(fig, use_container_width=True)
-
-# 3. FÜL: ELŐZMÉNYEK ÉS TÖRLÉS
-with tab_lista:
-    if df.empty:
-        st.info("Üres a lista.")
-    else:
-        st.dataframe(df.iloc[::-1], use_container_width=True, hide_index=True)
-        
-        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
-            st.rerun()
