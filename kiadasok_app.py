@@ -444,6 +444,58 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+def globalis_gomb_hang():
+    """Azonnali, finom UI-kattanás minden gomb, fül, kategória és opció megérintésekor."""
+    components.html(
+        """<script>
+        (function() {
+            try {
+                const pDoc = window.parent.document;
+                const pWin = window.parent;
+                if (pWin.__kozosUiClickHooked) return;
+                pWin.__kozosUiClickHooked = true;
+
+                let audioCtx = null;
+                function playClick() {
+                    try {
+                        const Ctx = pWin.AudioContext || pWin.webkitAudioContext;
+                        if (!Ctx) return;
+                        if (!audioCtx) audioCtx = new Ctx();
+                        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                        const now = audioCtx.currentTime;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(740, now);
+                        osc.frequency.exponentialRampToValueAtTime(510, now + 0.036);
+
+                        gain.gain.setValueAtTime(0.11, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.042);
+
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.045);
+                    } catch (err) {}
+                }
+
+                pDoc.addEventListener('pointerdown', function(e) {
+                    const target = e.target.closest(
+                        'button, [role="tab"], [role="radio"], [role="option"], [data-baseweb="radio"], [data-testid="stExpander"] summary'
+                    );
+                    if (target && !target.disabled) {
+                        playClick();
+                    }
+                }, { capture: true, passive: true });
+            } catch (e) {}
+        })();
+        </script>""",
+        height=0,
+    )
+
+globalis_gomb_hang()
+
 def hangeffekt(tipus="siker"):
     components.html(
         f"""<script>try {{
