@@ -5,6 +5,18 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+# Lehúzós oldalfrissítés (Pull-to-Refresh) tiltása mobilon
+st.markdown(
+    """
+    <style>
+    html, body, [data-testid="stAppViewContainer"], .main {
+        overscroll-behavior-y: contain !important;
+        overscroll-behavior: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 # Mobilbarát oldalbeállítás
 st.set_page_config(page_title="Közös Kiadások", page_icon="💑", layout="centered")
 st.title("💑 Közös Kiadáskövető")
