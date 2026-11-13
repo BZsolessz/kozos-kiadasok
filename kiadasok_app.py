@@ -17,19 +17,21 @@ st.markdown(
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior-y: contain !important;
         touch-action: pan-y !important;
-        color: #f5f5f4 !important;
+        color: #f8fafc !important;
         scroll-behavior: smooth !important;
     }
+    /* Új: Mély éjszakai fenyő & meleg arany ambient háttér */
     [data-testid="stAppViewContainer"] {
-        background-color: #0c0a09 !important;
+        background-color: #080d0c !important;
         background-image:
-            radial-gradient(circle at 18% 14%, rgba(217, 119, 6, 0.26) 0%, transparent 46%),
-            radial-gradient(circle at 84% 24%, rgba(154, 52, 18, 0.28) 0%, transparent 48%),
-            radial-gradient(circle at 50% 88%, rgba(71, 85, 105, 0.26) 0%, transparent 55%),
-            linear-gradient(160deg, #0f0d0c 0%, #1c1512 52%, #11161d 100%) !important;
+            radial-gradient(ellipse at 12% 10%, rgba(245, 158, 11, 0.24) 0%, transparent 48%),
+            radial-gradient(ellipse at 88% 20%, rgba(16, 185, 129, 0.22) 0%, transparent 50%),
+            radial-gradient(ellipse at 25% 88%, rgba(217, 119, 6, 0.20) 0%, transparent 52%),
+            radial-gradient(ellipse at 82% 85%, rgba(5, 150, 105, 0.18) 0%, transparent 50%),
+            linear-gradient(155deg, #070c0b 0%, #0e1917 48%, #16120d 100%) !important;
         background-attachment: fixed !important;
     }
-    /* Késő őszi köd és lágyan szitáló novemberi eső + hulló levelek */
+    /* Lassan úszó, meleg arany fényrészecskék (zavaró esőcsíkok nélkül) */
     [data-testid="stAppViewContainer"]::before {
         content: "";
         position: fixed;
@@ -37,45 +39,46 @@ st.markdown(
         pointer-events: none;
         z-index: 0;
         background-image:
-            linear-gradient(172deg, transparent 45%, rgba(203, 213, 225, 0.14) 50%, transparent 55%),
-            linear-gradient(172deg, transparent 45%, rgba(217, 119, 6, 0.16) 50%, transparent 55%),
-            radial-gradient(3px 2px at 45px 60px, rgba(217, 119, 6, 0.55) 50%, transparent 100%),
-            radial-gradient(3.5px 2px at 175px 130px, rgba(180, 83, 9, 0.50) 50%, transparent 100%);
-        background-size: 130px 180px, 190px 240px, 260px 260px, 310px 310px;
-        animation: novemberRain 3.2s linear infinite;
+            radial-gradient(2.5px 2.5px at 40px 80px, rgba(251, 191, 36, 0.65) 45%, transparent 100%),
+            radial-gradient(2px 2px at 140px 210px, rgba(52, 211, 153, 0.50) 45%, transparent 100%),
+            radial-gradient(3px 3px at 230px 120px, rgba(245, 158, 11, 0.55) 45%, transparent 100%),
+            radial-gradient(1.5px 1.5px at 310px 270px, rgba(254, 243, 199, 0.60) 45%, transparent 100%);
+        background-size: 340px 340px;
+        animation: autumnGlow 18s linear infinite;
     }
-    @keyframes novemberRain {
-        0% { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
-        100% { background-position: -18px 180px, -24px 240px, 30px 260px, -25px 310px; }
+    @keyframes autumnGlow {
+        0% { background-position: 0px 340px, 0px 340px, 0px 340px, 0px 340px; opacity: 0.75; }
+        50% { opacity: 1; }
+        100% { background-position: 45px 0px, -35px 0px, 25px 0px, -20px 0px; opacity: 0.75; }
     }
     [data-testid="stHeader"] { background: transparent !important; }
 
-    /* Fluid átmenetek minden interaktív elemen */
+    /* Fluid átmenetek */
     button, input, [data-testid="stMetric"], [data-baseweb="tab"] {
         transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
     button:active { transform: scale(0.98) !important; }
 
-    /* Novemberi borostyán-gesztenye kategória gombok (st.pills) */
+    /* Kategória gombok (st.pills) */
     [data-testid="stPills"] button, [data-testid="stPills"] button p, [data-testid="stPills"] button span {
-        background: rgba(28, 22, 19, 0.85) !important;
-        color: #e7e5e4 !important;
-        border-color: rgba(217, 119, 6, 0.32) !important;
+        background: rgba(14, 23, 21, 0.82) !important;
+        color: #f1f5f9 !important;
+        border-color: rgba(245, 158, 11, 0.30) !important;
         border-radius: 999px !important;
     }
     [data-testid="stPills"] button[aria-pressed="true"],
     [data-testid="stPills"] button[aria-pressed="true"] p,
     [data-testid="stPills"] button[aria-pressed="true"] span {
-        background: linear-gradient(135deg, rgba(180, 83, 9, 0.78), rgba(120, 53, 15, 0.85)) !important;
-        border-color: #f59e0b !important;
-        color: #fffbeb !important;
-        box-shadow: 0 0 14px rgba(217, 119, 6, 0.35) !important;
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.75), rgba(5, 150, 105, 0.75)) !important;
+        border-color: #fbbf24 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.32) !important;
     }
 
-    /* Meleg üveghatású kártyák */
+    /* Üveghatású kártyák */
     [data-testid="stMetric"] {
-        background: rgba(24, 19, 17, 0.70) !important;
-        border: 1px solid rgba(217, 119, 6, 0.28) !important;
+        background: rgba(13, 22, 20, 0.68) !important;
+        border: 1px solid rgba(251, 191, 36, 0.24) !important;
         border-radius: 16px !important;
         padding: 13px 16px !important;
         backdrop-filter: blur(12px) !important;
@@ -86,7 +89,7 @@ st.markdown(
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        background-color: #1c1917 !important;
+        background-color: #0e1917 !important;
     }
     </style>""",
     unsafe_allow_html=True,
@@ -104,24 +107,20 @@ def hangeffekt(tipus="siker"):
                 o.connect(g); g.connect(ctx.destination); o.start(s); o.stop(s + d);
             }}
             if (t==="siker") {{
-                // Meleg őszi zongora-szerű akkord (F4 -> A4 -> C5 -> E5)
                 p(349.23, now, 0.45, 'sine', 0.18);
                 p(440.00, now+0.09, 0.45, 'sine', 0.18);
                 p(523.25, now+0.18, 0.50, 'sine', 0.20);
                 p(659.25, now+0.27, 0.65, 'sine', 0.22);
             }}
             else if (t==="torles") {{
-                // Lágy őszi szél / lehulló levél hang (D4 -> A3)
                 p(293.66, now, 0.28, 'sine', 0.18);
                 p(220.00, now+0.13, 0.42, 'sine', 0.18);
             }}
             else if (t==="frissites") {{
-                // Tiszta esőcsepp koppanás (E5 -> B5)
                 p(659.25, now, 0.12, 'sine', 0.15);
                 p(987.77, now+0.08, 0.22, 'sine', 0.16);
             }}
             else if (t==="hiba") {{
-                // Tompa fa koppanás (G3)
                 p(196.00, now, 0.15, 'triangle', 0.20);
                 p(196.00, now+0.17, 0.20, 'triangle', 0.20);
             }}
@@ -129,7 +128,7 @@ def hangeffekt(tipus="siker"):
         height=0,
     )
 
-st.title("🍂 Közös pénzügyek 🌧️")
+st.title("🍂 Közös pénzügyek ✨")
 
 @st.cache_resource
 def csatlakozas_sheetshez():
@@ -146,7 +145,6 @@ except Exception as e:
     st.error(f"Csatlakozási hiba: {e}")
     st.stop()
 
-# Gyorsítótárazott adatbetöltés a villámgyors, akadásmentes felületért
 @st.cache_data(ttl=60, show_spinner=False)
 def adatok_betoltese():
     rekordok = sheet.get_all_records()
@@ -244,9 +242,9 @@ with tab_stat:
                 names="Típus",
                 hole=0.45,
                 title="Bevételek megoszlása",
-                color_discrete_sequence=["#d97706", "#b45309", "#65a30d", "#0284c7"],
+                color_discrete_sequence=["#f59e0b", "#10b981", "#d97706", "#0ea5e9"],
             )
-            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f5f5f4")
+            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
             st.plotly_chart(fig_bev, use_container_width=True)
 
         if not kiadasok.empty:
@@ -261,9 +259,9 @@ with tab_stat:
                 names="Kategória",
                 hole=0.45,
                 title="Kiadások megoszlása",
-                color_discrete_sequence=["#d97706", "#9a3412", "#ca8a04", "#4d7c0f", "#475569", "#b91c1c", "#0f766e"],
+                color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6"],
             )
-            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f5f5f4")
+            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
             st.plotly_chart(fig_ki, use_container_width=True)
 
         if not tartozasok.empty:
@@ -278,10 +276,10 @@ with tab_lista:
         st.info("Üres a lista.")
     else:
         st.dataframe(df.iloc[::-1].drop(columns=["Sheet_Row"]), use_container_width=True, hide_index=True)
-        if st.button("🌧️ Frissítés a felhőből", use_container_width=True):
+        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
             adatok_betoltese.clear()
             hangeffekt("frissites")
-            st.toast("Frissítve!", icon="🌧️")
+            st.toast("Frissítve!", icon="🔄")
             time.sleep(0.4)
             st.rerun()
         st.divider()
