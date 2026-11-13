@@ -23,39 +23,46 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Beépített kellemes csilingelő hangeffekt (külső fájl nélkül)
-def siker_hang():
+# Letisztult hangeffektek minden művelethez (külső fájl nélkül)
+def hangeffekt(tipus="siker"):
     components.html(
-        """
+        f"""
         <script>
-        try {
+        try {{
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const now = ctx.currentTime;
-            
-            // 1. hang (C5)
-            const osc1 = ctx.createOscillator();
-            const gain1 = ctx.createGain();
-            osc1.type = 'sine';
-            osc1.frequency.setValueAtTime(523.25, now);
-            gain1.gain.setValueAtTime(0.25, now);
-            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-            osc1.connect(gain1);
-            gain1.connect(ctx.destination);
-            osc1.start(now);
-            osc1.stop(now + 0.35);
+            const tipus = "{tipus}";
 
-            // 2. hang (G5 - magasabb csilingelés)
-            const osc2 = ctx.createOscillator();
-            const gain2 = ctx.createGain();
-            osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(783.99, now + 0.12);
-            gain2.gain.setValueAtTime(0.25, now + 0.12);
-            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-            osc2.connect(gain2);
-            gain2.connect(ctx.destination);
-            osc2.start(now + 0.12);
-            osc2.stop(now + 0.6);
-        } catch (e) {}
+            function playTone(freq, start, duration, type = 'sine', vol = 0.22) {{
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, start);
+                gain.gain.setValueAtTime(vol, start);
+                gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(start);
+                osc.stop(start + duration);
+            }}
+
+            if (tipus === "siker") {{
+                // Felfelé ívelő kettős csilingelés (C5 -> G5)
+                playTone(523.25, now, 0.35, 'sine', 0.25);
+                playTone(783.99, now + 0.12, 0.55, 'sine', 0.25);
+            }} else if (tipus === "torles") {{
+                // Lágy lefelé lépő dupla hang (E4 -> A3)
+                playTone(329.63, now, 0.25, 'sine', 0.22);
+                playTone(220.00, now + 0.14, 0.40, 'sine', 0.22);
+            }} else if (tipus === "frissites") {{
+                // Rövid, tiszta vízcsepp/pop hang (A5)
+                playTone(880.00, now, 0.18, 'sine', 0.18);
+            }} else if (tipus === "hiba") {{
+                // Tompa figyelmeztető dupla jelzés (F3)
+                playTone(174.61, now, 0.16, 'triangle', 0.22);
+                playTone(174.61, now + 0.18, 0.22, 'triangle', 0.22);
+            }}
+        }} catch (e) {{}}
         </script>
         """,
         height=0,
@@ -95,7 +102,6 @@ def adatok_betoltese():
     if not rekordok:
         return pd.DataFrame(columns=["Sheet_Row", "Dátum", "Ki", "Kategória", "Megnevezés", "Összeg"])
     df = pd.DataFrame(rekordok)
-    # A Google Sheets 1. sora a fejléc, az első adat a 2. sorban van
     df["Sheet_Row"] = range(2, len(df) + 2)
     df["Összeg"] = pd.to_numeric(df["Összeg"], errors="coerce").fillna(0).astype(int)
     return df
@@ -128,6 +134,7 @@ with tab_uj:
 
         if kuldes:
             if not megnevezes or osszeg <= 0:
+                hangeffekt("hiba")
                 st.toast("⚠️ Írd be a megnevezést és az összeget!", icon="⚠️")
                 st.warning("Írd be a megnevezést és egy 0-nál nagyobb összeget!")
             else:
@@ -135,8 +142,7 @@ with tab_uj:
                     uj_sor = [str(datum), ki, kategoria, megnevezes, int(osszeg)]
                     sheet.append_row(uj_sor)
                 
-                # Hangeffekt + animált visszacsatolás
-                siker_hang()
+                hangeffekt("siker")
                 st.balloons()
                 st.toast(f"Sikeresen mentve: {megnevezes}!", icon="✅")
                 st.success(f"Rögzítve: {megnevezes} ({osszeg:,} Ft)".replace(",", " "))
@@ -171,11 +177,11 @@ with tab_lista:
     if df.empty:
         st.info("Üres a lista.")
     else:
-        # Legújabb tételek elöl, rejtve a belső Sheet_Row oszlopot
         megjelenitendo_df = df.iloc[::-1].drop(columns=["Sheet_Row"])
         st.dataframe(megjelenitendo_df, use_container_width=True, hide_index=True)
 
         if st.button("🔄 Frissítés a felhőből", use_container_width=True):
+            hangeffekt("frissites")
             st.toast("Adatok frissítve!", icon="🔄")
             time.sleep(0.5)
             st.rerun()
@@ -199,6 +205,7 @@ with tab_lista:
             if st.button("🗑️ Kiválasztott tétel végleges törlése", type="primary", use_container_width=True):
                 with st.spinner("Törlés a Google Táblázatból..."):
                     sheet.delete_rows(int(kivalasztott_sor))
+                hangeffekt("torles")
                 st.toast("Tétel törölve!", icon="🗑️")
                 st.success("A tétel sikeresen törölve lett!")
                 time.sleep(1.0)
