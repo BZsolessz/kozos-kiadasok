@@ -1,5 +1,5 @@
 import time
-from datetime import date
+from datetime import date, datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
@@ -275,21 +275,25 @@ with tab_hitel:
     hitel_torlesztesek = df[df["Kategória"] == "Hitel: Törlesztés"].copy()
 
     if hitel_keretek.empty:
-        st.info("Még nincs beállított hitel. Nyisd le az alábbi panelt az első hitel rögzítéséhez!")
+        st.info("Még nincs beállított hitel. Nyisd le az alábbi panelt a hitel adatainak megadásához!")
     else:
         honap_nevek = ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"]
         akt_honap = date.today().strftime("%Y-%m")
 
         for _, h_sor in hitel_keretek.iterrows():
-            # Formátum: "Hitel neve | havi:25000"
-            reszek = str(h_sor["Megnevezés"]).split("|")
-            h_nev = reszek[0].strip()
+            # Formátum: "Hitel neve | havi:25000 | kezdet:2025-06-15"
+            reszek = [r.strip() for r in str(h_sor["Megnevezés"]).split("|")]
+            h_nev = reszek[0]
             havi_torleszto = 0
-            if len(reszek) > 1 and "havi:" in reszek[1]:
-                try:
-                    havi_torleszto = int(reszek[1].replace("havi:", "").strip())
-                except ValueError:
-                    havi_torleszto = 0
+            kezdo_datum_str = str(h_sor["Dátum"])
+            for r in reszek[1:]:
+                if r.startswith("havi:"):
+                    try:
+                        havi_torleszto = int(r.replace("havi:", "").strip())
+                    except ValueError:
+                        havi_torleszto = 0
+                elif r.startswith("kezdet:"):
+                    kezdo_datum_str = r.replace("kezdet:", "").strip()
 
             teljes_osszeg = int(h_sor["Összeg"])
             kapcsolodo_befizetesek = hitel_torlesztesek[hitel_torlesztesek["Megnevezés"].str.startswith(h_nev, na=False)]
@@ -299,32 +303,31 @@ with tab_hitel:
             szazalek = min(1.0, eddig_kifizetve / teljes_osszeg) if teljes_osszeg > 0 else 0.0
 
             st.markdown(f"### 📌 {h_nev}")
+            st.caption(f"🗓️ Hitel kezdete: **{kezdo_datum_str}**")
             st.progress(szazalek, text=f"Kifizetve: {szazalek*100:.1f}% ({eddig_kifizetve:,.0f} Ft / {teljes_osszeg:,.0f} Ft)".replace(",", " "))
 
             hc1, hc2 = st.columns(2)
-            hc1.metric("Hátralévő tartozás", f"{hatralevo:,.0f} Ft".replace(",", " "))
+            hc1.metric("Jelenlegi tartozás", f"{hatralevo:,.0f} Ft".replace(",", " "))
             hc2.metric("Ebben a hónapban levonva", f"{e_havi_levonas:,.0f} Ft".replace(",", " "))
 
             if hatralevo == 0:
                 st.success("🎉 Ez a hitel teljesen ki van fizetve!")
             elif havi_torleszto > 0:
-                hatralevo_honapok = -(-hatralevo // havi_torleszto)  # felfelé kerekítés
+                hatralevo_honapok = -(-hatralevo // havi_torleszto)
                 ma = date.today()
                 cel_ev = ma.year + (ma.month - 1 + hatralevo_honapok) // 12
                 cel_honap = (ma.month - 1 + hatralevo_honapok) % 12 + 1
                 st.info(f"⏳ Havi **{havi_torleszto:,.0f} Ft**-os törlesztővel még **{hatralevo_honapok} hónap** van hátra → Várható lejárat: **{cel_ev}. {honap_nevek[cel_honap - 1]}**".replace(",", " "))
             st.divider()
 
-        # Havi levonás rögzítése
         with st.expander("💸 Havi levonás / törlesztés rögzítése", expanded=True):
             hitel_nevek = [str(x).split("|")[0].strip() for x in hitel_keretek["Megnevezés"]]
             valasztott_hitel = st.selectbox("Melyik hitelhez?", hitel_nevek)
-            # Alapértelmezett összegként betölti a beállított havi törlesztőt
             alap_torleszto = 0
             for _, h_sor in hitel_keretek.iterrows():
                 if str(h_sor["Megnevezés"]).split("|")[0].strip() == valasztott_hitel and "havi:" in str(h_sor["Megnevezés"]):
                     try:
-                        alap_torleszto = int(str(h_sor["Megnevezés"]).split("havi:")[1].strip())
+                        alap_torleszto = int(str(h_sor["Megnevezés"]).split("havi:")[1].split("|")[0].strip())
                     except ValueError:
                         alap_torleszto = 0
             levont_osszeg = st.number_input("Levont összeg (Ft)", min_value=0, value=alap_torleszto, step=500, key="hitel_levonas_osszeg")
@@ -345,15 +348,23 @@ with tab_hitel:
 
     with st.expander("⚙️ Új hitel beállítása"):
         uj_hitel_nev = st.text_input("Hitel neve (pl. Telefon részlet, Személyi kölcsön)").strip()
-        uj_hitel_teljes = st.number_input("Teljes visszafizetendő összeg (Ft)", min_value=0, step=5000, key="uj_hitel_teljes")
+        uj_hitel_kezdet = st.date_input("Mikor kezdődött a hitel?", value=date.today(), key="uj_hitel_kezdet")
+        uj_hitel_teljes = st.number_input("Teljes visszafizetendő összeg eredetileg (Ft)", min_value=0, step=5000, key="uj_hitel_teljes")
+        uj_hitel_jelenlegi = st.number_input("Jelenleg mennyi a tartozás még (Ft)", min_value=0, step=5000, key="uj_hitel_jelenlegi")
         uj_hitel_havi = st.number_input("Havi törlesztőrészlet (Ft)", min_value=0, step=1000, key="uj_hitel_havi")
         if st.button("💾 Hitel mentése", use_container_width=True):
             if not uj_hitel_nev or uj_hitel_teljes <= 0:
                 hangeffekt("hiba")
                 st.warning("Add meg a hitel nevét és a teljes összeget!")
+            elif uj_hitel_jelenlegi > uj_hitel_teljes:
+                hangeffekt("hiba")
+                st.warning("A jelenlegi tartozás nem lehet nagyobb, mint a teljes hitelösszeg!")
             else:
                 with st.spinner("Mentés..."):
-                    sheet.append_row([str(date.today()), "Zsolt", "Hitel: Keret", f"{uj_hitel_nev} | havi:{int(uj_hitel_havi)}", int(uj_hitel_teljes)])
+                    sheet.append_row([str(uj_hitel_kezdet), "Zsolt", "Hitel: Keret", f"{uj_hitel_nev} | havi:{int(uj_hitel_havi)} | kezdet:{uj_hitel_kezdet}", int(uj_hitel_teljes)])
+                    mar_kifizetett = uj_hitel_teljes - uj_hitel_jelenlegi
+                    if mar_kifizetett > 0:
+                        sheet.append_row([str(uj_hitel_kezdet), "Zsolt", "Hitel: Törlesztés", f"{uj_hitel_nev} – korábbi törlesztések", int(mar_kifizetett)])
                 adatok_betoltese.clear()
                 hangeffekt("siker")
                 st.toast(f"Hitel létrehozva: {uj_hitel_nev}!", icon="🏦")
