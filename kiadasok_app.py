@@ -171,9 +171,42 @@ st.markdown(
     }
 
     button, input, [data-testid="stMetric"], [data-baseweb="tab"] {
-        transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
+        transition: all 0.20s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
     button:active { transform: scale(0.97) !important; }
+
+    /* Kategória rács gombok (szellős, nem folyik egybe) */
+    button[kind="secondary"] {
+        background: rgba(14, 24, 22, 0.82) !important;
+        border: 1px solid rgba(255, 255, 255, 0.11) !important;
+        border-radius: 14px !important;
+        color: #e2e8f0 !important;
+        min-height: 46px !important;
+        padding: 8px 10px !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+    }
+    button[kind="secondary"]:hover {
+        border-color: rgba(251, 191, 36, 0.45) !important;
+        background: rgba(22, 36, 33, 0.90) !important;
+        color: #ffffff !important;
+    }
+    button[kind="secondary"] p {
+        font-size: 0.86rem !important;
+        font-weight: 500 !important;
+    }
+
+    .kat-selected-banner {
+        background: linear-gradient(90deg, rgba(217, 119, 6, 0.22), rgba(16, 185, 129, 0.20));
+        border: 1px solid rgba(251, 191, 36, 0.45);
+        border-radius: 12px;
+        padding: 7px 13px;
+        margin: 4px 0 12px 0;
+        font-size: 0.85rem;
+        color: #fef3c7;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
 
     [data-testid="stPills"] button, [data-testid="stPills"] button p, [data-testid="stPills"] button span {
         background: rgba(14, 23, 21, 0.82) !important;
@@ -349,6 +382,38 @@ def osszeg_mezo(cimke, key, alap_ertek=0):
         st.caption(f"💰 Rögzítendő összeg: **{fmt_ft(ertek)} Ft**")
     return ertek
 
+def kategoria_racs_valaszto(opciok_lista, state_key):
+    """2 oszlopos, szellős érintőkártya-rács a kategóriákhoz."""
+    if state_key not in st.session_state or st.session_state[state_key] not in [o[0] for o in opciok_lista]:
+        st.session_state[state_key] = opciok_lista[0][0]
+
+    aktualis = st.session_state[state_key]
+    for i in range(0, len(opciok_lista), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            if i + j < len(opciok_lista):
+                valos_nev, rovid_cimke = opciok_lista[i + j]
+                kivalasztva = (valos_nev == aktualis)
+                gomb_felirat = f"✓ {rovid_cimke}" if kivalasztva else rovid_cimke
+                if cols[j].button(
+                    gomb_felirat,
+                    key=f"{state_key}_btn_{i+j}",
+                    use_container_width=True,
+                    type="primary" if kivalasztva else "secondary",
+                ):
+                    st.session_state[state_key] = valos_nev
+                    st.rerun()
+
+    kivalasztott_rovid = next((r for v, r in opciok_lista if v == st.session_state[state_key]), st.session_state[state_key])
+    st.markdown(
+        f"""<div class="kat-selected-banner">
+            <span>Kiválasztott kategória:</span>
+            <b>{kivalasztott_rovid}</b>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    return st.session_state[state_key]
+
 def parse_datum(datum_ertek):
     tisztitott = re.sub(r"[.\s/]+", "-", str(datum_ertek).strip()).strip("-")
     return pd.to_datetime(tisztitott, errors="coerce")
@@ -427,20 +492,31 @@ with tab_uj:
     tipus = st.radio("Művelet típusa", ["➖ Kiadás", "➕ Bevétel"], horizontal=True)
 
     if tipus == "➕ Bevétel":
-        kategoria_valasztott = st.pills(
-            "Bevétel típusa",
-            ["Közös kasszába befizetés", "Ajándék / Támogatás", "Eladás / Visszatérítés", "Egyéb bevétel"],
-            default="Közös kasszába befizetés",
-        ) or "Közös kasszába befizetés"
+        bevetel_opciok = [
+            ("Közös kasszába befizetés", "💰 Kassza befizetés"),
+            ("Ajándék / Támogatás", "🎁 Ajándék / Támogatás"),
+            ("Eladás / Visszatérítés", "🔄 Eladás / Visszatérítés"),
+            ("Egyéb bevétel", "✨ Egyéb bevétel"),
+        ]
+        kategoria_valasztott = kategoria_racs_valaszto(bevetel_opciok, "valasztott_bev_kat")
         kategoria = f"Bevétel: {kategoria_valasztott}"
         ki = st.text_input("Kitől kaptuk / Ki tette bele?", placeholder="pl. Zsolt, Vivien, Szülők").strip()
         megnevezes = st.text_input("Megnevezés (pl. Havi keret, Visszatérítés)")
     else:
-        kategoria = st.pills(
-            "Kategória",
-            ["Élelmiszer & Háztartás", "Gyógyszertár", "Dohánybolt", "Ajándékozás", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
-            default="Élelmiszer & Háztartás",
-        ) or "Élelmiszer & Háztartás"
+        kiadas_opciok = [
+            ("Élelmiszer & Háztartás", "🛒 Élelmiszer"),
+            ("Gyógyszertár", "💊 Gyógyszertár"),
+            ("Dohánybolt", "🚬 Dohánybolt"),
+            ("Étterem & Randi", "🍽️ Étterem & Randi"),
+            ("Üzemanyag & Autó", "⛽ Autó & Üzemanyag"),
+            ("Lakhatás & Rezsi", "🏠 Lakhatás & Rezsi"),
+            ("Előfizetés", "📱 Előfizetés"),
+            ("Ajándékozás", "🎁 Ajándékozás"),
+            ("Tech & Vásárlás", "💻 Tech & Vásárlás"),
+            ("Tartozás", "💸 Tartozás"),
+            ("Egyéb", "📦 Egyéb"),
+        ]
+        kategoria = kategoria_racs_valaszto(kiadas_opciok, "valasztott_ki_kat")
         if kategoria == "Tartozás":
             st.info("💸 **Tartozás rögzítése**")
             c1, c2 = st.columns(2)
