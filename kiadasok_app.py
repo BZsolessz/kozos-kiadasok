@@ -161,4 +161,45 @@ with tab_stat:
         st.divider()
 
         # Kördiagram kategóriánként
-        kat
+        kat_df = df.groupby("Kategória", as_index=False)["Összeg"].sum()
+        fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
+        fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+        st.plotly_chart(fig, use_container_width=True)
+
+# 3. FÜL: ELŐZMÉNYEK, TÖRLÉS ÉS FRISSÍTÉS
+with tab_lista:
+    if df.empty:
+        st.info("Üres a lista.")
+    else:
+        # Legújabb tételek elöl, rejtve a belső Sheet_Row oszlopot
+        megjelenitendo_df = df.iloc[::-1].drop(columns=["Sheet_Row"])
+        st.dataframe(megjelenitendo_df, use_container_width=True, hide_index=True)
+
+        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
+            st.toast("Adatok frissítve!", icon="🔄")
+            time.sleep(0.5)
+            st.rerun()
+
+        st.divider()
+
+        # Tétel törlése lenyíló listából
+        with st.expander("🗑️ Tétel törlése"):
+            forditott_df = df.iloc[::-1]
+            opciok = {
+                row["Sheet_Row"]: f"{row['Dátum']} | {row['Ki']} – {row['Megnevezés']} ({row['Összeg']:,} Ft)".replace(",", " ")
+                for _, row in forditott_df.iterrows()
+            }
+
+            kivalasztott_sor = st.selectbox(
+                "Válaszd ki a törlendő tételt:",
+                options=list(opciok.keys()),
+                format_func=lambda x: opciok[x],
+            )
+
+            if st.button("🗑️ Kiválasztott tétel végleges törlése", type="primary", use_container_width=True):
+                with st.spinner("Törlés a Google Táblázatból..."):
+                    sheet.delete_rows(int(kivalasztott_sor))
+                st.toast("Tétel törölve!", icon="🗑️")
+                st.success("A tétel sikeresen törölve lett!")
+                time.sleep(1.0)
+                st.rerun()
