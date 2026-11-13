@@ -17,6 +17,30 @@ st.markdown(
         overscroll-behavior-y: contain !important;
         touch-action: pan-y !important;
     }
+    [data-testid="stAppViewContainer"] {
+        background-color: #070b14 !important;
+        background-image:
+            radial-gradient(circle at 15% 18%, rgba(16, 185, 129, 0.22) 0%, transparent 45%),
+            radial-gradient(circle at 85% 25%, rgba(99, 102, 241, 0.24) 0%, transparent 48%),
+            radial-gradient(circle at 50% 88%, rgba(14, 165, 233, 0.20) 0%, transparent 52%),
+            linear-gradient(145deg, #060913 0%, #0d1528 50%, #08121e 100%) !important;
+        background-attachment: fixed !important;
+        animation: ambientPulse 14s ease-in-out infinite alternate;
+    }
+    @keyframes ambientPulse {
+        0% { background-position: 0% 0%; filter: brightness(0.96); }
+        100% { background-position: 100% 100%; filter: brightness(1.06); }
+    }
+    [data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    [data-testid="stMetric"] {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        border-radius: 14px !important;
+        padding: 12px 16px !important;
+        backdrop-filter: blur(10px) !important;
+    }
     [data-baseweb="popover"], [data-baseweb="menu"], ul[role="listbox"] {
         max-height: 55vh !important;
         overflow-y: auto !important;
@@ -154,7 +178,7 @@ with tab_stat:
                 st.metric(f"{sor['Ki']}", f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
             bevetelek["Típus"] = bevetelek["Kategória"].str.replace("Bevétel: ", "", regex=False)
             fig_bev = px.pie(bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(), values="Összeg", names="Típus", hole=0.45, title="Bevételek megoszlása")
-            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_bev, use_container_width=True)
 
         if not kiadasok.empty:
@@ -164,7 +188,7 @@ with tab_stat:
             c1.metric("Zsolt költötte", f"{kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum():,.0f} Ft".replace(",", " "))
             c2.metric("Vivien költötte", f"{kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum():,.0f} Ft".replace(",", " "))
             fig_ki = px.pie(kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum(), values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
-            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_ki, use_container_width=True)
 
         if not tartozasok.empty:
