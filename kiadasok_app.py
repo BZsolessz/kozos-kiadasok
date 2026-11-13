@@ -390,7 +390,7 @@ with tab_uj:
     else:
         kategoria = st.pills(
             "Kategória",
-            ["Élelmiszer & Háztartás", "Dohánybolt", "Ajándékozás", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
+            ["Élelmiszer & Háztartás", "Gyógyszertár", "Dohánybolt", "Ajándékozás", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
             default="Élelmiszer & Háztartás",
         ) or "Élelmiszer & Háztartás"
         if kategoria == "Tartozás":
@@ -403,6 +403,7 @@ with tab_uj:
             ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
 
         placeholder_szoveg = {
+            "Gyógyszertár": "Mit vettetek? (pl. Gyógyszer, Vitamin, Patika)",
             "Tartozás": "Mire vonatkozik?",
             "Előfizetés": "Melyik előfizetés? (pl. Netflix, Apple Music, Internet)",
             "Dohánybolt": "Mit vettetek? (pl. Trafik, Üdítő)",
@@ -508,7 +509,7 @@ with tab_stat:
                 names="Kategória",
                 hole=0.45,
                 title="Kiadások megoszlása",
-                color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6", "#a855f7", "#14b8a6"],
+                color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6", "#a855f7", "#14b8a6", "#ec4899"],
             )
             fig_ki.update_traces(textposition="inside", textinfo="percent+label")
             fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
