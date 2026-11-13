@@ -65,7 +65,6 @@ st.markdown(
         display: none !important;
     }
 
-    /* Automatikus PC vs Mobil konténer méretezés */
     .block-container {
         max-width: 1120px !important;
         padding-top: 1.0rem !important;
@@ -82,7 +81,6 @@ st.markdown(
             padding-right: 0.85rem !important;
             padding-bottom: 1.8rem !important;
         }
-        /* Mobilon az oszlopok egymás alá rendeződnek a kényelmes érintéshez */
         [data-testid="stHorizontalBlock"].pc-split {
             flex-direction: column !important;
         }
@@ -270,7 +268,6 @@ st.markdown(
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
     }
 
-    /* Új kompakt Statisztika kártyák */
     .stat-glass-card {
         background: linear-gradient(145deg, rgba(15, 25, 23, 0.82), rgba(11, 18, 16, 0.78));
         border: 1px solid rgba(251, 191, 36, 0.22);
@@ -367,7 +364,6 @@ st.markdown(
         margin-left: 5px;
     }
 
-    /* Modern előzmény kártyák */
     .tx-summary-bar {
         background: rgba(13, 22, 20, 0.65);
         border: 1px solid rgba(251, 191, 36, 0.20);
@@ -522,10 +518,7 @@ def kategoria_racs_valaszto(opciok_lista, state_key):
 
     kivalasztott_rovid = next((r for v, r in opciok_lista if v == st.session_state[state_key]), st.session_state[state_key])
     st.markdown(
-        f"""<div class="kat-selected-banner">
-            <span>Kiválasztott kategória:</span>
-            <b>{kivalasztott_rovid}</b>
-        </div>""",
+        f'<div class="kat-selected-banner"><span>Kiválasztott kategória:</span><b>{kivalasztott_rovid}</b></div>',
         unsafe_allow_html=True,
     )
     return st.session_state[state_key]
@@ -589,19 +582,7 @@ ma_fejlec = date.today()
 badge_osztaly = "top-nav-badge" if aktualis_egyenleg >= 0 else "top-nav-badge-neg"
 
 st.markdown(
-    f"""<div class="top-nav-hero">
-        <div>
-            <div class="top-nav-title">🍂 Közös pénzügyek</div>
-            <div class="top-nav-sub">Zsolt &amp; Vivien • {ma_fejlec.year}. {HONAP_NEVEK[ma_fejlec.month - 1]} {ma_fejlec.day}.</div>
-        </div>
-        <div class="top-nav-right">
-            <span class="device-pill"></span>
-            <div class="{badge_osztaly}">
-                <span class="top-nav-badge-label">Kassza egyenleg</span>
-                <span class="top-nav-badge-val">{fmt_ft(aktualis_egyenleg)} Ft</span>
-            </div>
-        </div>
-    </div>""",
+    f'<div class="top-nav-hero"><div><div class="top-nav-title">🍂 Közös pénzügyek</div><div class="top-nav-sub">Zsolt &amp; Vivien • {ma_fejlec.year}. {HONAP_NEVEK[ma_fejlec.month - 1]} {ma_fejlec.day}.</div></div><div class="top-nav-right"><span class="device-pill"></span><div class="{badge_osztaly}"><span class="top-nav-badge-label">Kassza egyenleg</span><span class="top-nav-badge-val">{fmt_ft(aktualis_egyenleg)} Ft</span></div></div></div>',
     unsafe_allow_html=True,
 )
 
@@ -717,32 +698,11 @@ with tab_stat:
         egyenleg = ossz_bevetel - ossz_kiadas
         egyenleg_szin = "#34d399" if egyenleg >= 0 else "#fbbf24"
 
-        # Kompakt összesítő kártya
         st.markdown(
-            f"""<div class="stat-glass-card">
-                <div class="stat-card-header">
-                    <span>📌 Pénzügyi mérleg</span>
-                    <span style="color:#94a3b8; font-weight:500;">{idoszak_cim}</span>
-                </div>
-                <div class="stat-kpi-grid">
-                    <div class="stat-kpi-box">
-                        <div class="stat-kpi-lbl">💵 Egyenleg</div>
-                        <div class="stat-kpi-num" style="color:{egyenleg_szin};">{fmt_ft(egyenleg)} Ft</div>
-                    </div>
-                    <div class="stat-kpi-box">
-                        <div class="stat-kpi-lbl">➕ Bevétel</div>
-                        <div class="stat-kpi-num" style="color:#6ee7b7;">{fmt_ft(ossz_bevetel)} Ft</div>
-                    </div>
-                    <div class="stat-kpi-box">
-                        <div class="stat-kpi-lbl">➖ Kiadás</div>
-                        <div class="stat-kpi-num" style="color:#fcd34d;">{fmt_ft(ossz_kiadas)} Ft</div>
-                    </div>
-                </div>
-            </div>""",
+            f'<div class="stat-glass-card"><div class="stat-card-header"><span>📌 Pénzügyi mérleg</span><span style="color:#94a3b8; font-weight:500;">{idoszak_cim}</span></div><div class="stat-kpi-grid"><div class="stat-kpi-box"><div class="stat-kpi-lbl">💵 Egyenleg</div><div class="stat-kpi-num" style="color:{egyenleg_szin};">{fmt_ft(egyenleg)} Ft</div></div><div class="stat-kpi-box"><div class="stat-kpi-lbl">➕ Bevétel</div><div class="stat-kpi-num" style="color:#6ee7b7;">{fmt_ft(ossz_bevetel)} Ft</div></div><div class="stat-kpi-box"><div class="stat-kpi-lbl">➖ Kiadás</div><div class="stat-kpi-num" style="color:#fcd34d;">{fmt_ft(ossz_kiadas)} Ft</div></div></div></div>',
             unsafe_allow_html=True,
         )
 
-        # Kompakt nézetválasztó a Statisztikán belül
         stat_nezet = st.pills(
             "Részletek",
             ["📤 Kiadások", "📥 Bevételek", "💸 Tartozások"],
@@ -767,22 +727,11 @@ with tab_stat:
                 )
                 kat_osszesites["Arány"] = (kat_osszesites["Összeg"] / ossz_kiadas * 100) if ossz_kiadas > 0 else 0.0
 
-                # PC-n 2 hasábos elrendezés, mobilon egymás alatt kompakt módon
                 col_s_bal, col_s_jobb = st.columns([1.05, 1.15], gap="medium")
 
                 with col_s_bal:
                     st.markdown(
-                        f"""<div class="stat-glass-card">
-                            <div class="stat-card-header"><span>👥 Ki mennyit fizetett</span></div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.86rem;">
-                                <span>🟡 <b>Zsolt:</b> {fmt_ft(zsolt_ki)} Ft ({str(zsolt_pct).replace('.', ',')}%)</span>
-                                <span>🟢 <b>Vivien:</b> {fmt_ft(vivien_ki)} Ft ({str(vivien_pct).replace('.', ',')}%)</span>
-                            </div>
-                            <div class="split-bar-wrap">
-                                <div class="split-bar-zsolt" style="width:{zsolt_pct}%;"></div>
-                                <div class="split-bar-vivien" style="width:{vivien_pct}%;"></div>
-                            </div>
-                        </div>""",
+                        f'<div class="stat-glass-card"><div class="stat-card-header"><span>👥 Ki mennyit fizetett</span></div><div style="display:flex; justify-content:space-between; font-size:0.86rem;"><span>🟡 <b>Zsolt:</b> {fmt_ft(zsolt_ki)} Ft ({str(zsolt_pct).replace(".", ",")}%)</span><span>🟢 <b>Vivien:</b> {fmt_ft(vivien_ki)} Ft ({str(vivien_pct).replace(".", ",")}%)</span></div><div class="split-bar-wrap"><div class="split-bar-zsolt" style="width:{zsolt_pct}%;"></div><div class="split-bar-vivien" style="width:{vivien_pct}%;"></div></div></div>',
                         unsafe_allow_html=True,
                     )
 
@@ -810,25 +759,10 @@ with tab_stat:
                     for _, k_sor in kat_osszesites.iterrows():
                         arany_szazalek = float(k_sor["Arány"])
                         arany_szoveg = f"{arany_szazalek:.1f}".replace(".", ",")
-                        sorok_html += f"""
-                        <div class="compact-cat-row">
-                            <div class="compact-cat-top">
-                                <div><b>{k_sor['Kategória']}</b> <span class="kat-arany-szazalek">{arany_szoveg}%</span></div>
-                                <div style="color:#e2e8f0;"><b>{fmt_ft(k_sor['Összeg'])} Ft</b> <span style="color:#94a3b8; font-size:0.76rem;">({int(k_sor['Darab'])} db)</span></div>
-                            </div>
-                            <div class="compact-cat-bar-bg">
-                                <div class="compact-cat-bar-fill" style="width:{min(100.0, arany_szazalek):.1f}%;"></div>
-                            </div>
-                        </div>"""
+                        sorok_html += f'<div class="compact-cat-row"><div class="compact-cat-top"><div><b>{k_sor["Kategória"]}</b> <span class="kat-arany-szazalek">{arany_szoveg}%</span></div><div style="color:#e2e8f0;"><b>{fmt_ft(k_sor["Összeg"])} Ft</b> <span style="color:#94a3b8; font-size:0.76rem;">({int(k_sor["Darab"])} db)</span></div></div><div class="compact-cat-bar-bg"><div class="compact-cat-bar-fill" style="width:{min(100.0, arany_szazalek):.1f}%;"></div></div></div>'
 
                     st.markdown(
-                        f"""<div class="stat-glass-card">
-                            <div class="stat-card-header">
-                                <span>📊 Kategóriák aránya</span>
-                                <span style="color:#94a3b8; font-weight:500;">{len(kat_osszesites)} kategória</span>
-                            </div>
-                            {sorok_html}
-                        </div>""",
+                        f'<div class="stat-glass-card"><div class="stat-card-header"><span>📊 Kategóriák aránya</span><span style="color:#94a3b8; font-weight:500;">{len(kat_osszesites)} kategória</span></div>{sorok_html}</div>',
                         unsafe_allow_html=True,
                     )
 
@@ -841,21 +775,10 @@ with tab_stat:
                     bev_forras_html = ""
                     for _, sor in bevetelek.groupby("Ki", as_index=False)["Összeg"].sum().sort_values("Összeg", ascending=False).iterrows():
                         pct = (sor["Összeg"] / ossz_bevetel * 100) if ossz_bevetel > 0 else 0.0
-                        bev_forras_html += f"""
-                        <div class="compact-cat-row">
-                            <div class="compact-cat-top">
-                                <div><b>👤 {sor['Ki']}</b> <span class="kat-arany-szazalek">{pct:.1f}%</span></div>
-                                <div style="color:#6ee7b7;"><b>{fmt_ft(sor['Összeg'])} Ft</b></div>
-                            </div>
-                            <div class="compact-cat-bar-bg">
-                                <div class="compact-cat-bar-fill" style="width:{min(100.0, pct):.1f}%;"></div>
-                            </div>
-                        </div>"""
+                        pct_str = f"{pct:.1f}".replace(".", ",")
+                        bev_forras_html += f'<div class="compact-cat-row"><div class="compact-cat-top"><div><b>👤 {sor["Ki"]}</b> <span class="kat-arany-szazalek">{pct_str}%</span></div><div style="color:#6ee7b7;"><b>{fmt_ft(sor["Összeg"])} Ft</b></div></div><div class="compact-cat-bar-bg"><div class="compact-cat-bar-fill" style="width:{min(100.0, pct):.1f}%;"></div></div></div>'
                     st.markdown(
-                        f"""<div class="stat-glass-card">
-                            <div class="stat-card-header"><span>💰 Befizetők aránya</span></div>
-                            {bev_forras_html}
-                        </div>""",
+                        f'<div class="stat-glass-card"><div class="stat-card-header"><span>💰 Befizetők aránya</span></div>{bev_forras_html}</div>',
                         unsafe_allow_html=True,
                     )
                 with col_b2:
@@ -885,18 +808,9 @@ with tab_stat:
                 tartozasok["Irány"] = tartozasok["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok["Ki"])
                 tart_html = ""
                 for _, sor in tartozasok.groupby("Irány", as_index=False)["Összeg"].sum().iterrows():
-                    tart_html += f"""
-                    <div class="compact-cat-row">
-                        <div class="compact-cat-top">
-                            <b>💸 {sor['Irány']}</b>
-                            <b style="color:#fda4af;">{fmt_ft(sor['Összeg'])} Ft</b>
-                        </div>
-                    </div>"""
+                    tart_html += f'<div class="compact-cat-row"><div class="compact-cat-top"><b>💸 {sor["Irány"]}</b><b style="color:#fda4af;">{fmt_ft(sor["Összeg"])} Ft</b></div></div>'
                 st.markdown(
-                    f"""<div class="stat-glass-card">
-                        <div class="stat-card-header"><span>💸 Tartozások összesítője</span></div>
-                        {tart_html}
-                    </div>""",
+                    f'<div class="stat-glass-card"><div class="stat-card-header"><span>💸 Tartozások összesítője</span></div>{tart_html}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -1093,10 +1007,7 @@ with tab_lista:
         talalat_db = len(szurt_df)
         talalat_osszeg = int(szurt_df["Összeg"].sum()) if not szurt_df.empty else 0
         st.markdown(
-            f"""<div class="tx-summary-bar">
-                <span>📋 <b>{talalat_db}</b> tétel megjelenítve</span>
-                <span>Összesen: <b style="color:#f8fafc;">{fmt_ft(talalat_osszeg)} Ft</b></span>
-            </div>""",
+            f'<div class="tx-summary-bar"><span>📋 <b>{talalat_db}</b> tétel megjelenítve</span><span>Összesen: <b style="color:#f8fafc;">{fmt_ft(talalat_osszeg)} Ft</b></span></div>',
             unsafe_allow_html=True,
         )
 
@@ -1132,17 +1043,7 @@ with tab_lista:
                 c_card, c_act = st.columns([5.2, 1.1], vertical_alignment="center")
                 with c_card:
                     st.markdown(
-                        f"""<div class="{card_cls}">
-                            <div style="min-width:0;">
-                                <div class="tx-title">{nev_tiszta}</div>
-                                <div class="tx-meta">
-                                    <span class="tx-pill">{kat_cimke}</span>
-                                    <span>👤 {r['Ki']}</span>
-                                    <span>• {r['Dátum']}</span>
-                                </div>
-                            </div>
-                            <div class="{amt_cls}">{elojel}{fmt_ft(r['Összeg'])} Ft</div>
-                        </div>""",
+                        f'<div class="{card_cls}"><div style="min-width:0;"><div class="tx-title">{nev_tiszta}</div><div class="tx-meta"><span class="tx-pill">{kat_cimke}</span><span>👤 {r["Ki"]}</span><span>• {r["Dátum"]}</span></div></div><div class="{amt_cls}">{elojel}{fmt_ft(r["Összeg"])} Ft</div></div>',
                         unsafe_allow_html=True,
                     )
                 with c_act:
