@@ -10,6 +10,13 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Közös pénzügyek 🍂", page_icon="🍂", layout="centered")
 
+# Mezők biztonságos kiürítése újrarenderelés előtt (StreamlitWidgetAlreadyInstantiatedError ellen)
+if st.session_state.pop("reset_uj_tetel", False):
+    st.session_state["uj_tetel_osszeg"] = ""
+if st.session_state.pop("reset_uj_hitel", False):
+    for k in ["uj_hitel_teljes", "uj_hitel_jelenlegi", "uj_hitel_havi"]:
+        st.session_state[k] = ""
+
 st.markdown(
     """<style>
     :root { color-scheme: dark !important; }
@@ -224,7 +231,7 @@ with tab_uj:
             vegleges_nev = f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if (tipus == "➖ Kiadás" and kategoria == "Tartozás") else megnevezes
             with st.spinner("Mentés..."):
                 sheet.append_row([str(datum), ki, kategoria, vegleges_nev, int(osszeg)])
-            st.session_state["uj_tetel_osszeg"] = ""
+            st.session_state["reset_uj_tetel"] = True
             adatok_betoltese.clear()
             hangeffekt("siker")
             st.toast(f"Mentve: {vegleges_nev} ({fmt_ft(osszeg)} Ft)!", icon="🍂")
@@ -406,8 +413,7 @@ with tab_hitel:
                     mar_kifizetett = uj_hitel_teljes - uj_hitel_jelenlegi
                     if mar_kifizetett > 0:
                         sheet.append_row([str(uj_hitel_kezdet), "Zsolt", "Hitel: Törlesztés", f"{uj_hitel_nev} – korábbi törlesztések", int(mar_kifizetett)])
-                for k in ["uj_hitel_teljes", "uj_hitel_jelenlegi", "uj_hitel_havi"]:
-                    st.session_state[k] = ""
+                st.session_state["reset_uj_hitel"] = True
                 adatok_betoltese.clear()
                 hangeffekt("siker")
                 st.toast(f"Hitel létrehozva: {uj_hitel_nev}!", icon="🏦")
