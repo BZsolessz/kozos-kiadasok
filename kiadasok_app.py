@@ -89,12 +89,14 @@ except Exception as e:
     st.error(f"Nem sikerült csatlakozni a Google Táblázathoz! Ellenőrizd a Secrets beállítást és a megosztást.\nRészletek: {e}")
     st.stop()
 
-# Adatok beolvasása a táblázatból
+# Adatok beolvasása a táblázatból (pontos Google Sheets sorszámmal együtt)
 def adatok_betoltese():
     rekordok = sheet.get_all_records()
     if not rekordok:
-        return pd.DataFrame(columns=["Dátum", "Ki", "Kategória", "Megnevezés", "Összeg"])
+        return pd.DataFrame(columns=["Sheet_Row", "Dátum", "Ki", "Kategória", "Megnevezés", "Összeg"])
     df = pd.DataFrame(rekordok)
+    # A Google Sheets 1. sora a fejléc, az első adat a 2. sorban van
+    df["Sheet_Row"] = range(2, len(df) + 2)
     df["Összeg"] = pd.to_numeric(df["Összeg"], errors="coerce").fillna(0).astype(int)
     return df
 
@@ -159,19 +161,4 @@ with tab_stat:
         st.divider()
 
         # Kördiagram kategóriánként
-        kat_df = df.groupby("Kategória", as_index=False)["Összeg"].sum()
-        fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
-        fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
-        st.plotly_chart(fig, use_container_width=True)
-
-# 3. FÜL: ELŐZMÉNYEK ÉS FRISSÍTÉS
-with tab_lista:
-    if df.empty:
-        st.info("Üres a lista.")
-    else:
-        st.dataframe(df.iloc[::-1], use_container_width=True, hide_index=True)
-        
-        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
-            st.toast("Adatok frissítve!", icon="🔄")
-            time.sleep(0.5)
-            st.rerun()
+        kat
