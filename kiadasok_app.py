@@ -90,7 +90,7 @@ with tab_uj:
     else:
         kategoria = st.pills(
             "Kategória",
-            ["Élelmiszer & Háztartás", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
+            ["Élelmiszer & Háztartás", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
             default="Élelmiszer & Háztartás",
         ) or "Élelmiszer & Háztartás"
         if kategoria == "Tartozás":
@@ -101,7 +101,11 @@ with tab_uj:
             ki = ki_tartozik
         else:
             ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
-        megnevezes = st.text_input("Mire vonatkozik?" if kategoria == "Tartozás" else "Mit vettetek? (pl. Lidl)")
+        megnevezes = st.text_input(
+            "Mire vonatkozik?" if kategoria == "Tartozás"
+            else ("Melyik előfizetés? (pl. Netflix, Apple Music, Internet)" if kategoria == "Előfizetés"
+            else "Mit vettetek? (pl. Lidl)")
+        )
 
     osszeg = st.number_input("Összeg (Ft)", min_value=0, step=500)
     datum = st.date_input("Dátum", value=date.today())
