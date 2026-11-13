@@ -16,6 +16,7 @@ st.markdown(
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior-y: contain !important;
         touch-action: pan-y !important;
+        color: #f1f5f9 !important;
     }
     [data-testid="stAppViewContainer"] {
         background-color: #070b14 !important;
@@ -31,9 +32,31 @@ st.markdown(
         0% { background-position: 0% 0%; filter: brightness(0.96); }
         100% { background-position: 100% 100%; filter: brightness(1.06); }
     }
-    [data-testid="stHeader"] {
-        background: transparent !important;
+    [data-testid="stHeader"] { background: transparent !important; }
+    h1, h2, h3, p, label, span, [data-testid="stMarkdownContainer"] { color: #f1f5f9 !important; }
+
+    /* Kategória gombok (st.pills) sötét ambient stílusa */
+    [data-testid="stPills"] button, button[kind="pills"], button[kind="pillsActive"] {
+        background: rgba(15, 23, 42, 0.72) !important;
+        color: #e2e8f0 !important;
+        border: 1px solid rgba(148, 163, 184, 0.28) !important;
+        border-radius: 999px !important;
+        backdrop-filter: blur(8px) !important;
     }
+    [data-testid="stPills"] button[aria-pressed="true"], button[kind="pillsActive"] {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(59, 130, 246, 0.35)) !important;
+        border: 1px solid rgba(52, 211, 153, 0.75) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.28) !important;
+    }
+
+    /* Beviteli mezők sötétítése */
+    input, [data-baseweb="input"], [data-baseweb="base-input"] {
+        background-color: rgba(15, 23, 42, 0.75) !important;
+        color: #f8fafc !important;
+        border-color: rgba(148, 163, 184, 0.25) !important;
+    }
+
     [data-testid="stMetric"] {
         background: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.10) !important;
@@ -46,6 +69,7 @@ st.markdown(
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+        background-color: #0f172a !important;
     }
     </style>""",
     unsafe_allow_html=True,
@@ -178,7 +202,7 @@ with tab_stat:
                 st.metric(f"{sor['Ki']}", f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
             bevetelek["Típus"] = bevetelek["Kategória"].str.replace("Bevétel: ", "", regex=False)
             fig_bev = px.pie(bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(), values="Összeg", names="Típus", hole=0.45, title="Bevételek megoszlása")
-            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f1f5f9")
             st.plotly_chart(fig_bev, use_container_width=True)
 
         if not kiadasok.empty:
@@ -188,7 +212,7 @@ with tab_stat:
             c1.metric("Zsolt költötte", f"{kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum():,.0f} Ft".replace(",", " "))
             c2.metric("Vivien költötte", f"{kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum():,.0f} Ft".replace(",", " "))
             fig_ki = px.pie(kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum(), values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
-            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f1f5f9")
             st.plotly_chart(fig_ki, use_container_width=True)
 
         if not tartozasok.empty:
