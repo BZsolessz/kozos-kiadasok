@@ -5,6 +5,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import streamlit.components.v1 as components
 
 # Mobilbarát oldalbeállítás
 st.set_page_config(page_title="Közös Kiadások", page_icon="💑", layout="centered")
@@ -21,6 +22,44 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Beépített kellemes csilingelő hangeffekt (külső fájl nélkül)
+def siker_hang():
+    components.html(
+        """
+        <script>
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = ctx.currentTime;
+            
+            // 1. hang (C5)
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(523.25, now);
+            gain1.gain.setValueAtTime(0.25, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.35);
+
+            // 2. hang (G5 - magasabb csilingelés)
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(783.99, now + 0.12);
+            gain2.gain.setValueAtTime(0.25, now + 0.12);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(now + 0.12);
+            osc2.stop(now + 0.6);
+        } catch (e) {}
+        </script>
+        """,
+        height=0,
+    )
 
 st.title("💑 Közös Kiadáskövető")
 
@@ -94,39 +133,8 @@ with tab_uj:
                     uj_sor = [str(datum), ki, kategoria, megnevezes, int(osszeg)]
                     sheet.append_row(uj_sor)
                 
-                # Animált visszacsatolás rögzítéskor
+                # Hangeffekt + animált visszacsatolás
+                siker_hang()
                 st.balloons()
                 st.toast(f"Sikeresen mentve: {megnevezes}!", icon="✅")
-                st.success(f"Rögzítve: {megnevezes} ({osszeg:,} Ft)".replace(",", " "))
-                time.sleep(1.5)
-                st.rerun()
-
-# 2. FÜL: KÖZÖS STATISZTIKA ÉS GRAFIKON (TARTOZÁS SZÁMOLÁS NÉLKÜL)
-with tab_stat:
-    if df.empty:
-        st.info("Még nincs rögzített tétel a táblázatban.")
-    else:
-        osszes = df["Összeg"].sum()
-        zsolt_ossz = df[df["Ki"] == "Zsolt"]["Összeg"].sum()
-        vivien_ossz = df[df["Ki"] == "Vivien"]["Összeg"].sum()
-
-        st.metric("Összes közös kiadás", f"{osszes:,.0f} Ft".replace(",", " "))
-        
-        col1, col2 = st.columns(2)
-        col1.metric("Zsolt", f"{zsolt_ossz:,.0f} Ft".replace(",", " "))
-        col2.metric("Vivien", f"{vivien_ossz:,.0f} Ft".replace(",", " "))
-
-        st.divider()
-
-        # Kördiagram kategóriánként
-        kat_df = df.groupby("Kategória", as_index=False)["Összeg"].sum()
-        fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
-        fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
-        st.plotly_chart(fig, use_container_width=True)
-
-# 3. FÜL: ELŐZMÉNYEK ÉS FRISSÍTÉS
-with tab_lista:
-    if df.empty:
-        st.info("Üres a lista.")
-    else:
-        st.dataframe(df.iloc[::-1], use_container_width=True, hide_index=True)
+                st.success(f"Rögzítve: {megnevezes} ({osszeg:,} Ft
