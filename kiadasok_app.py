@@ -57,7 +57,6 @@ st.markdown(
         100% { background-position: 45px 0px, -35px 0px, 25px 0px, -20px 0px; opacity: 0.75; }
     }
 
-    /* Streamlit alap felső sáv letisztítása és kompakt térköz */
     [data-testid="stHeader"] {
         background: transparent !important;
         height: 0.5rem !important;
@@ -70,7 +69,6 @@ st.markdown(
         padding-bottom: 2.5rem !important;
     }
 
-    /* Modern üveghatású felső fejléc kártya */
     .top-nav-hero {
         background: linear-gradient(135deg, rgba(16, 28, 25, 0.86) 0%, rgba(24, 20, 15, 0.84) 100%);
         border: 1px solid rgba(251, 191, 36, 0.28);
@@ -131,7 +129,6 @@ st.markdown(
         color: #fcd34d;
     }
 
-    /* Modern, kapszulás, 4 egyenlő oszlopos fülsáv */
     [data-testid="stTabs"] [role="tablist"] {
         background: rgba(11, 19, 17, 0.78) !important;
         border: 1px solid rgba(251, 191, 36, 0.22) !important;
@@ -200,6 +197,24 @@ st.markdown(
         padding: 13px 16px !important;
         backdrop-filter: blur(12px) !important;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
+    }
+    .kat-arany-sor {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        margin-bottom: 3px;
+        font-size: 0.92rem;
+    }
+    .kat-arany-szazalek {
+        background: rgba(245, 158, 11, 0.22);
+        border: 1px solid rgba(251, 191, 36, 0.45);
+        color: #fcd34d;
+        font-weight: 700;
+        font-size: 0.80rem;
+        padding: 2px 9px;
+        border-radius: 999px;
+        margin-left: 6px;
     }
     .torles-kartya {
         background: rgba(16, 26, 24, 0.72);
@@ -334,7 +349,6 @@ def adatok_betoltese():
 
 df = adatok_betoltese()
 
-# Élő egyenleg kiszámítása a modern felső sávhoz
 if not df.empty:
     _bev = df[df["Kategória"].str.startswith("Bevétel:", na=False)]["Összeg"].sum()
     _ki = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))]["Összeg"].sum()
@@ -476,20 +490,42 @@ with tab_stat:
 
         if not kiadasok.empty:
             st.divider()
-            st.subheader("📤 Kiadások bontása")
+            st.subheader("📤 Kiadások bontása és kategória arányok")
             c1, c2 = st.columns(2)
             c1.metric("Zsolt költötte", f"{fmt_ft(kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum())} Ft")
             c2.metric("Vivien költötte", f"{fmt_ft(kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum())} Ft")
+
+            kat_osszesites = (
+                kiadasok.groupby("Kategória", as_index=False)
+                .agg(Összeg=("Összeg", "sum"), Darab=("Összeg", "count"))
+                .sort_values("Összeg", ascending=False)
+            )
+            kat_osszesites["Arány"] = (kat_osszesites["Összeg"] / ossz_kiadas * 100) if ossz_kiadas > 0 else 0.0
+
             fig_ki = px.pie(
-                kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum(),
+                kat_osszesites,
                 values="Összeg",
                 names="Kategória",
                 hole=0.45,
                 title="Kiadások megoszlása",
                 color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6", "#a855f7", "#14b8a6"],
             )
+            fig_ki.update_traces(textposition="inside", textinfo="percent+label")
             fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
             st.plotly_chart(fig_ki, use_container_width=True)
+
+            st.markdown("#### 📊 Kategóriák pontos aránya")
+            for _, k_sor in kat_osszesites.iterrows():
+                arany_szazalek = float(k_sor["Arány"])
+                arany_szoveg = f"{arany_szazalek:.1f}".replace(".", ",")
+                st.markdown(
+                    f"""<div class="kat-arany-sor">
+                        <div><b>{k_sor['Kategória']}</b> <span class="kat-arany-szazalek">{arany_szoveg}%</span></div>
+                        <div style="color:#cbd5e1; font-size:0.86rem;"><b>{fmt_ft(k_sor['Összeg'])} Ft</b> <span style="color:#94a3b8;">({int(k_sor['Darab'])} tétel)</span></div>
+                    </div>""",
+                    unsafe_allow_html=True,
+                )
+                st.progress(min(1.0, max(0.0, arany_szazalek / 100.0)))
 
         if not tartozasok.empty:
             st.divider()
