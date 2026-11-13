@@ -7,7 +7,7 @@ import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Közös pénzügyek", page_icon="💰", layout="centered")
+st.set_page_config(page_title="Közös pénzügyek 🎄", page_icon="🎄", layout="centered")
 
 st.markdown(
     """<style>
@@ -17,41 +17,57 @@ st.markdown(
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior-y: contain !important;
         touch-action: pan-y !important;
-        color: #f1f5f9 !important;
+        color: #f8fafc !important;
     }
     [data-testid="stAppViewContainer"] {
-        background-color: #070b14 !important;
+        background-color: #090d16 !important;
         background-image:
-            radial-gradient(circle at 15% 18%, rgba(16, 185, 129, 0.22) 0%, transparent 45%),
-            radial-gradient(circle at 85% 25%, rgba(99, 102, 241, 0.24) 0%, transparent 48%),
-            radial-gradient(circle at 50% 88%, rgba(14, 165, 233, 0.20) 0%, transparent 52%),
-            linear-gradient(145deg, #060913 0%, #0d1528 50%, #08121e 100%) !important;
+            radial-gradient(circle at 18% 15%, rgba(220, 38, 38, 0.28) 0%, transparent 45%),
+            radial-gradient(circle at 82% 22%, rgba(22, 163, 74, 0.28) 0%, transparent 48%),
+            radial-gradient(circle at 50% 85%, rgba(234, 179, 8, 0.20) 0%, transparent 52%),
+            linear-gradient(155deg, #0b131e 0%, #141e1b 50%, #1a0f14 100%) !important;
         background-attachment: fixed !important;
-        animation: ambientPulse 14s ease-in-out infinite alternate;
     }
-    @keyframes ambientPulse {
-        0% { background-position: 0% 0%; filter: brightness(0.96); }
-        100% { background-position: 100% 100%; filter: brightness(1.06); }
+    /* Folyamatos, visszafogott karácsonyi hóesés a háttérben */
+    [data-testid="stAppViewContainer"]::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image:
+            radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.75) 50%, transparent 100%),
+            radial-gradient(2.5px 2.5px at 90px 140px, rgba(255,255,255,0.65) 50%, transparent 100%),
+            radial-gradient(1.5px 1.5px at 160px 70px, rgba(255,255,255,0.55) 50%, transparent 100%),
+            radial-gradient(2px 2px at 230px 190px, rgba(254,240,138,0.6) 50%, transparent 100%);
+        background-size: 260px 260px;
+        animation: snowfall 14s linear infinite;
+    }
+    @keyframes snowfall {
+        0% { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
+        100% { background-position: 40px 260px, -30px 260px, 20px 260px, -25px 260px; }
     }
     [data-testid="stHeader"] { background: transparent !important; }
 
-    /* Kategória gombok (st.pills) */
+    /* Karácsonyi kategória gombok (st.pills) */
     [data-testid="stPills"] button, [data-testid="stPills"] button p, [data-testid="stPills"] button span {
-        background: rgba(15, 23, 42, 0.85) !important;
-        color: #f1f5f9 !important;
-        border-color: rgba(148, 163, 184, 0.35) !important;
+        background: rgba(20, 28, 36, 0.85) !important;
+        color: #f8fafc !important;
+        border-color: rgba(234, 179, 8, 0.35) !important;
     }
     [data-testid="stPills"] button[aria-pressed="true"],
     [data-testid="stPills"] button[aria-pressed="true"] p,
     [data-testid="stPills"] button[aria-pressed="true"] span {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.45), rgba(59, 130, 246, 0.45)) !important;
-        border-color: #34d399 !important;
+        background: linear-gradient(135deg, rgba(185, 28, 28, 0.65), rgba(21, 128, 61, 0.65)) !important;
+        border-color: #facc15 !important;
         color: #ffffff !important;
+        box-shadow: 0 0 12px rgba(250, 204, 21, 0.30) !important;
     }
 
+    /* Üveghatású arany-szegélyes kártyák */
     [data-testid="stMetric"] {
-        background: rgba(255, 255, 255, 0.06) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background: rgba(15, 23, 32, 0.65) !important;
+        border: 1px solid rgba(250, 204, 21, 0.25) !important;
         border-radius: 14px !important;
         padding: 12px 16px !important;
         backdrop-filter: blur(10px) !important;
@@ -61,7 +77,7 @@ st.markdown(
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        background-color: #0f172a !important;
+        background-color: #111827 !important;
     }
     </style>""",
     unsafe_allow_html=True,
@@ -78,7 +94,13 @@ def hangeffekt(tipus="siker"):
                 g.gain.setValueAtTime(v, s); g.gain.exponentialRampToValueAtTime(0.001, s + d);
                 o.connect(g); g.connect(ctx.destination); o.start(s); o.stop(s + d);
             }}
-            if (t==="siker") {{ p(523.25, now, 0.35, 'sine', 0.25); p(783.99, now+0.12, 0.55, 'sine', 0.25); }}
+            if (t==="siker") {{
+                // Karácsonyi csengettyű dallam (E5 - E5 - E5 - G5)
+                p(659.25, now, 0.16, 'sine', 0.22);
+                p(659.25, now+0.14, 0.16, 'sine', 0.22);
+                p(659.25, now+0.28, 0.24, 'sine', 0.24);
+                p(783.99, now+0.44, 0.50, 'sine', 0.25);
+            }}
             else if (t==="torles") {{ p(329.63, now, 0.25); p(220.00, now+0.14, 0.40); }}
             else if (t==="frissites") {{ p(880.00, now, 0.18, 'sine', 0.18); }}
             else if (t==="hiba") {{ p(174.61, now, 0.16, 'triangle'); p(174.61, now+0.18, 0.22, 'triangle'); }}
@@ -86,7 +108,7 @@ def hangeffekt(tipus="siker"):
         height=0,
     )
 
-st.title("💰 Közös pénzügyek")
+st.title("🎄 Közös pénzügyek ✨")
 
 @st.cache_resource
 def csatlakozas_sheetshez():
@@ -113,7 +135,7 @@ def adatok_betoltese():
     return df
 
 df = adatok_betoltese()
-tab_uj, tab_stat, tab_lista = st.tabs(["➕ Új tétel", "📊 Statisztika", "📝 Előzmények"])
+tab_uj, tab_stat, tab_lista = st.tabs(["🎁 Új tétel", "📊 Statisztika", "📜 Előzmények"])
 
 with tab_uj:
     tipus = st.radio("Művelet típusa", ["➖ Kiadás", "➕ Bevétel"], horizontal=True)
@@ -126,11 +148,11 @@ with tab_uj:
         ) or "Közös kasszába befizetés"
         kategoria = f"Bevétel: {kategoria_valasztott}"
         ki = st.text_input("Kitől kaptuk / Ki tette bele?", placeholder="pl. Zsolt, Vivien, Szülők").strip()
-        megnevezes = st.text_input("Megnevezés (pl. Havi keret, Szülinap)")
+        megnevezes = st.text_input("Megnevezés (pl. Havi keret, Karácsonyi ajándék)")
     else:
         kategoria = st.pills(
             "Kategória",
-            ["Élelmiszer & Háztartás", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
+            ["Élelmiszer & Háztartás", "Ajándék & Ünnepek", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
             default="Élelmiszer & Háztartás",
         ) or "Élelmiszer & Háztartás"
         if kategoria == "Tartozás":
@@ -144,13 +166,14 @@ with tab_uj:
         megnevezes = st.text_input(
             "Mire vonatkozik?" if kategoria == "Tartozás"
             else ("Melyik előfizetés? (pl. Netflix, Apple Music, Internet)" if kategoria == "Előfizetés"
-            else "Mit vettetek? (pl. Lidl)")
+            else ("Mit vettetek? (pl. Ajándék, Dekor)" if kategoria == "Ajándék & Ünnepek"
+            else "Mit vettetek? (pl. Lidl)"))
         )
 
     osszeg = st.number_input("Összeg (Ft)", min_value=0, step=500)
     datum = st.date_input("Dátum", value=date.today())
 
-    if st.button("💾 Rögzítés a felhőbe", use_container_width=True, type="primary"):
+    if st.button("🎄 Rögzítés a felhőbe", use_container_width=True, type="primary"):
         if tipus == "➕ Bevétel" and not ki:
             hangeffekt("hiba")
             st.warning("Add meg, kitől származik a bevétel!")
@@ -165,8 +188,8 @@ with tab_uj:
             with st.spinner("Mentés..."):
                 sheet.append_row([str(datum), ki, kategoria, vegleges_nev, int(osszeg)])
             hangeffekt("siker")
-            st.balloons()
-            st.toast(f"Mentve: {vegleges_nev}!", icon="✅")
+            st.snow()
+            st.toast(f"Mentve: {vegleges_nev}!", icon="🎄")
             time.sleep(1.5)
             st.rerun()
 
@@ -193,8 +216,15 @@ with tab_stat:
             for _, sor in bevetelek.groupby("Ki", as_index=False)["Összeg"].sum().iterrows():
                 st.metric(f"{sor['Ki']}", f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
             bevetelek["Típus"] = bevetelek["Kategória"].str.replace("Bevétel: ", "", regex=False)
-            fig_bev = px.pie(bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(), values="Összeg", names="Típus", hole=0.45, title="Bevételek megoszlása")
-            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f1f5f9")
+            fig_bev = px.pie(
+                bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(),
+                values="Összeg",
+                names="Típus",
+                hole=0.45,
+                title="Bevételek megoszlása",
+                color_discrete_sequence=["#16a34a", "#dc2626", "#eab308", "#0284c7"],
+            )
+            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
             st.plotly_chart(fig_bev, use_container_width=True)
 
         if not kiadasok.empty:
@@ -203,8 +233,15 @@ with tab_stat:
             c1, c2 = st.columns(2)
             c1.metric("Zsolt költötte", f"{kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum():,.0f} Ft".replace(",", " "))
             c2.metric("Vivien költötte", f"{kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum():,.0f} Ft".replace(",", " "))
-            fig_ki = px.pie(kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum(), values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
-            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f1f5f9")
+            fig_ki = px.pie(
+                kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum(),
+                values="Összeg",
+                names="Kategória",
+                hole=0.45,
+                title="Kiadások megoszlása",
+                color_discrete_sequence=["#dc2626", "#16a34a", "#eab308", "#f97316", "#0ea5e9", "#a855f7", "#14b8a6"],
+            )
+            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
             st.plotly_chart(fig_ki, use_container_width=True)
 
         if not tartozasok.empty:
@@ -219,9 +256,9 @@ with tab_lista:
         st.info("Üres a lista.")
     else:
         st.dataframe(df.iloc[::-1].drop(columns=["Sheet_Row"]), use_container_width=True, hide_index=True)
-        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
+        if st.button("❄️ Frissítés a felhőből", use_container_width=True):
             hangeffekt("frissites")
-            st.toast("Frissítve!", icon="🔄")
+            st.toast("Frissítve!", icon="❄️")
             time.sleep(0.5)
             st.rerun()
         st.divider()
