@@ -10,9 +10,20 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="Közös pénzügyek", page_icon="💰", layout="centered")
 
 st.markdown(
-    """<style>html, body, [data-testid="stAppViewContainer"], .main {
-    overscroll-behavior-y: contain !important; overscroll-behavior: none !important;
-    }</style>""",
+    """<style>
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
+    }
+    [data-baseweb="popover"], [data-baseweb="menu"], ul[role="listbox"] {
+        max-height: 55vh !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+    }
+    </style>""",
     unsafe_allow_html=True,
 )
 
@@ -68,18 +79,20 @@ with tab_uj:
     tipus = st.radio("Művelet típusa", ["➖ Kiadás", "➕ Bevétel"], horizontal=True)
 
     if tipus == "➕ Bevétel":
-        kategoria_valasztott = st.selectbox(
+        kategoria_valasztott = st.pills(
             "Bevétel típusa",
             ["Közös kasszába befizetés", "Ajándék / Támogatás", "Eladás / Visszatérítés", "Egyéb bevétel"],
-        )
+            default="Közös kasszába befizetés",
+        ) or "Közös kasszába befizetés"
         kategoria = f"Bevétel: {kategoria_valasztott}"
         ki = st.text_input("Kitől kaptuk / Ki tette bele?", placeholder="pl. Zsolt, Vivien, Szülők").strip()
         megnevezes = st.text_input("Megnevezés (pl. Havi keret, Szülinap)")
     else:
-        kategoria = st.selectbox(
+        kategoria = st.pills(
             "Kategória",
-            ["Élelmiszer & Háztartás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Tartozás", "Egyéb"],
-        )
+            ["Élelmiszer & Háztartás", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
+            default="Élelmiszer & Háztartás",
+        ) or "Élelmiszer & Háztartás"
         if kategoria == "Tartozás":
             st.info("💸 **Tartozás rögzítése**")
             c1, c2 = st.columns(2)
