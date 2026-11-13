@@ -187,4 +187,58 @@ with tab_stat:
             st.divider()
 
             kat_df = kiadasok_df.groupby("Kategória", as_index=False)["Összeg"].sum()
-            fig = px.pie(kat_df, values="Összeg", names="Kateg
+            fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
+            fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Még nincs rögzített közös kiadás.")
+
+        # Rögzített tartozások összesítése irányonként
+        if not tartozasok_df.empty:
+            st.divider()
+            st.subheader("💸 Rögzített tartozások")
+            
+            # Kinyerjük a "(Ki → Kinek)" irányt a megnevezés végéről
+            tartozasok_df["Irány"] = tartozasok_df["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok_df["Ki"])
+            osszesitett_tartozasok = tartozasok_df.groupby("Irány", as_index=False)["Összeg"].sum()
+
+            for _, sor in osszesitett_tartozasok.iterrows():
+                st.metric(sor["Irány"], f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
+
+# 3. FÜL: ELŐZMÉNYEK, TÖRLÉS ÉS FRISSÍTÉS
+with tab_lista:
+    if df.empty:
+        st.info("Üres a lista.")
+    else:
+        megjelenitendo_df = df.iloc[::-1].drop(columns=["Sheet_Row"])
+        st.dataframe(megjelenitendo_df, use_container_width=True, hide_index=True)
+
+        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
+            hangeffekt("frissites")
+            st.toast("Adatok frissítve!", icon="🔄")
+            time.sleep(0.5)
+            st.rerun()
+
+        st.divider()
+
+        with st.expander("🗑️ Tétel törlése"):
+            forditott_df = df.iloc[::-1]
+            opciok = {
+                row["Sheet_Row"]: f"{row['Dátum']} | {row['Ki']} – {row['Megnevezés']} ({row['Összeg']:,} Ft)".replace(",", " ")
+                for _, row in forditott_df.iterrows()
+            }
+
+            kivalasztott_sor = st.selectbox(
+                "Válaszd ki a törlendő tételt:",
+                options=list(opciok.keys()),
+                format_func=lambda x: opciok[x],
+            )
+
+            if st.button("🗑️ Kiválasztott tétel végleges törlése", type="primary", use_container_width=True):
+                with st.spinner("Törlés a Google Táblázatból..."):
+                    sheet.delete_rows(int(kivalasztott_sor))
+                hangeffekt("torles")
+                st.toast("Tétel törölve!", icon="🗑️")
+                st.success("A tétel sikeresen törölve lett!")
+                time.sleep(1.0)
+                st.rerun()
