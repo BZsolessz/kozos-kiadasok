@@ -11,6 +11,7 @@ st.set_page_config(page_title="Közös pénzügyek", page_icon="💰", layout="c
 
 st.markdown(
     """<style>
+    :root { color-scheme: dark !important; }
     html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
@@ -33,33 +34,24 @@ st.markdown(
         100% { background-position: 100% 100%; filter: brightness(1.06); }
     }
     [data-testid="stHeader"] { background: transparent !important; }
-    h1, h2, h3, p, label, span, [data-testid="stMarkdownContainer"] { color: #f1f5f9 !important; }
 
-    /* Kategória gombok (st.pills) sötét ambient stílusa */
-    [data-testid="stPills"] button, button[kind="pills"], button[kind="pillsActive"] {
-        background: rgba(15, 23, 42, 0.72) !important;
-        color: #e2e8f0 !important;
-        border: 1px solid rgba(148, 163, 184, 0.28) !important;
-        border-radius: 999px !important;
-        backdrop-filter: blur(8px) !important;
+    /* Kategória gombok (st.pills) */
+    [data-testid="stPills"] button, [data-testid="stPills"] button p, [data-testid="stPills"] button span {
+        background: rgba(15, 23, 42, 0.85) !important;
+        color: #f1f5f9 !important;
+        border-color: rgba(148, 163, 184, 0.35) !important;
     }
-    [data-testid="stPills"] button[aria-pressed="true"], button[kind="pillsActive"] {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(59, 130, 246, 0.35)) !important;
-        border: 1px solid rgba(52, 211, 153, 0.75) !important;
+    [data-testid="stPills"] button[aria-pressed="true"],
+    [data-testid="stPills"] button[aria-pressed="true"] p,
+    [data-testid="stPills"] button[aria-pressed="true"] span {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.45), rgba(59, 130, 246, 0.45)) !important;
+        border-color: #34d399 !important;
         color: #ffffff !important;
-        box-shadow: 0 0 12px rgba(16, 185, 129, 0.28) !important;
-    }
-
-    /* Beviteli mezők sötétítése */
-    input, [data-baseweb="input"], [data-baseweb="base-input"] {
-        background-color: rgba(15, 23, 42, 0.75) !important;
-        color: #f8fafc !important;
-        border-color: rgba(148, 163, 184, 0.25) !important;
     }
 
     [data-testid="stMetric"] {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
         border-radius: 14px !important;
         padding: 12px 16px !important;
         backdrop-filter: blur(10px) !important;
