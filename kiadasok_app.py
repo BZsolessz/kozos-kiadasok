@@ -7,7 +7,7 @@ import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Közös Kiadások", page_icon="💑", layout="centered")
+st.set_page_config(page_title="Közös pénzügyek", page_icon="💰", layout="centered")
 
 st.markdown(
     """<style>html, body, [data-testid="stAppViewContainer"], .main {
@@ -35,7 +35,7 @@ def hangeffekt(tipus="siker"):
         height=0,
     )
 
-st.title("💑 Közös Kiadáskövető")
+st.title("💰 Közös pénzügyek")
 
 @st.cache_resource
 def csatlakozas_sheetshez():
@@ -65,32 +65,46 @@ df = adatok_betoltese()
 tab_uj, tab_stat, tab_lista = st.tabs(["➕ Új tétel", "📊 Statisztika", "📝 Előzmények"])
 
 with tab_uj:
-    kategoria = st.selectbox(
-        "Kategória",
-        ["Élelmiszer & Háztartás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Tartozás", "Egyéb"],
-    )
-    if kategoria == "Tartozás":
-        st.info("💸 **Tartozás rögzítése**")
-        c1, c2 = st.columns(2)
-        ki_tartozik = c1.text_input("Ki tartozik?", placeholder="pl. Zsolt").strip()
-        kinek_tartozik = c2.text_input("Kinek tartozik?", placeholder="pl. Vivien").strip()
-        ki = ki_tartozik
-    else:
-        ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
+    tipus = st.radio("Művelet típusa", ["➖ Kiadás", "➕ Bevétel"], horizontal=True)
 
-    megnevezes = st.text_input("Mire vonatkozik?" if kategoria == "Tartozás" else "Mit vettetek? (pl. Lidl)")
+    if tipus == "➕ Bevétel":
+        kategoria_valasztott = st.selectbox(
+            "Bevétel típusa",
+            ["Közös kasszába befizetés", "Ajándék / Támogatás", "Eladás / Visszatérítés", "Egyéb bevétel"],
+        )
+        kategoria = f"Bevétel: {kategoria_valasztott}"
+        ki = st.text_input("Kitől kaptuk / Ki tette bele?", placeholder="pl. Zsolt, Vivien, Szülők").strip()
+        megnevezes = st.text_input("Megnevezés (pl. Havi keret, Szülinap)")
+    else:
+        kategoria = st.selectbox(
+            "Kategória",
+            ["Élelmiszer & Háztartás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Tartozás", "Egyéb"],
+        )
+        if kategoria == "Tartozás":
+            st.info("💸 **Tartozás rögzítése**")
+            c1, c2 = st.columns(2)
+            ki_tartozik = c1.text_input("Ki tartozik?", placeholder="pl. Zsolt").strip()
+            kinek_tartozik = c2.text_input("Kinek tartozik?", placeholder="pl. Vivien").strip()
+            ki = ki_tartozik
+        else:
+            ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
+        megnevezes = st.text_input("Mire vonatkozik?" if kategoria == "Tartozás" else "Mit vettetek? (pl. Lidl)")
+
     osszeg = st.number_input("Összeg (Ft)", min_value=0, step=500)
     datum = st.date_input("Dátum", value=date.today())
 
     if st.button("💾 Rögzítés a felhőbe", use_container_width=True, type="primary"):
-        if kategoria == "Tartozás" and (not ki_tartozik or not kinek_tartozik):
+        if tipus == "➕ Bevétel" and not ki:
+            hangeffekt("hiba")
+            st.warning("Add meg, kitől származik a bevétel!")
+        elif tipus == "➖ Kiadás" and kategoria == "Tartozás" and (not ki_tartozik or not kinek_tartozik):
             hangeffekt("hiba")
             st.warning("Írd be mindkét fél nevét a tartozásnál!")
         elif not megnevezes or osszeg <= 0:
             hangeffekt("hiba")
             st.warning("Írd be a megnevezést és egy 0-nál nagyobb összeget!")
         else:
-            vegleges_nev = f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if kategoria == "Tartozás" else megnevezes
+            vegleges_nev = f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if (tipus == "➖ Kiadás" and kategoria == "Tartozás") else megnevezes
             with st.spinner("Mentés..."):
                 sheet.append_row([str(datum), ki, kategoria, vegleges_nev, int(osszeg)])
             hangeffekt("siker")
@@ -103,19 +117,38 @@ with tab_stat:
     if df.empty:
         st.info("Még nincs rögzített tétel.")
     else:
-        kiadasok = df[df["Kategória"] != "Tartozás"]
+        bevetelek = df[df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
         tartozasok = df[df["Kategória"] == "Tartozás"].copy()
+        kiadasok = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (df["Kategória"] != "Tartozás")].copy()
+
+        ossz_bevetel = bevetelek["Összeg"].sum() if not bevetelek.empty else 0
+        ossz_kiadas = kiadasok["Összeg"].sum() if not kiadasok.empty else 0
+        egyenleg = ossz_bevetel - ossz_kiadas
+
+        st.metric("💵 Jelenleg felhasználható egyenleg", f"{egyenleg:,.0f} Ft".replace(",", " "))
+        m1, m2 = st.columns(2)
+        m1.metric("➕ Összes bevétel", f"{ossz_bevetel:,.0f} Ft".replace(",", " "))
+        m2.metric("➖ Összes kiadás", f"{ossz_kiadas:,.0f} Ft".replace(",", " "))
+
+        if not bevetelek.empty:
+            st.divider()
+            st.subheader("📥 Bevételek forrása (mennyit adtatok bele)")
+            for _, sor in bevetelek.groupby("Ki", as_index=False)["Összeg"].sum().iterrows():
+                st.metric(f"{sor['Ki']}", f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
+            bevetelek["Típus"] = bevetelek["Kategória"].str.replace("Bevétel: ", "", regex=False)
+            fig_bev = px.pie(bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(), values="Összeg", names="Típus", hole=0.45, title="Bevételek megoszlása")
+            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+            st.plotly_chart(fig_bev, use_container_width=True)
 
         if not kiadasok.empty:
-            st.metric("Összes közös kiadás", f"{kiadasok['Összeg'].sum():,.0f} Ft".replace(",", " "))
-            c1, c2 = st.columns(2)
-            c1.metric("Zsolt", f"{kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum():,.0f} Ft".replace(",", " "))
-            c2.metric("Vivien", f"{kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum():,.0f} Ft".replace(",", " "))
             st.divider()
-            kat_df = kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum()
-            fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
-            fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
-            st.plotly_chart(fig, use_container_width=True)
+            st.subheader("📤 Kiadások bontása")
+            c1, c2 = st.columns(2)
+            c1.metric("Zsolt költötte", f"{kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum():,.0f} Ft".replace(",", " "))
+            c2.metric("Vivien költötte", f"{kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum():,.0f} Ft".replace(",", " "))
+            fig_ki = px.pie(kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum(), values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
+            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+            st.plotly_chart(fig_ki, use_container_width=True)
 
         if not tartozasok.empty:
             st.divider()
