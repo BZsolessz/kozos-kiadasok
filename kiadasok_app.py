@@ -10,7 +10,6 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Közös pénzügyek 🍂", page_icon="🍂", layout="centered")
 
-# Mezők biztonságos kiürítése újrarenderelés előtt (StreamlitWidgetAlreadyInstantiatedError ellen)
 if st.session_state.pop("reset_uj_tetel", False):
     st.session_state["uj_tetel_osszeg"] = ""
 if st.session_state.pop("reset_uj_hitel", False):
@@ -148,6 +147,13 @@ def osszeg_mezo(cimke, key, alap_ertek=0):
     if ertek > 0:
         st.caption(f"💰 Rögzítendő összeg: **{fmt_ft(ertek)} Ft**")
     return ertek
+
+def formazott_tabla(resz_df, kategoria_szoveg_csere=None):
+    megj = resz_df.iloc[::-1].drop(columns=["Sheet_Row"]).copy()
+    if kategoria_szoveg_csere:
+        megj["Kategória"] = megj["Kategória"].str.replace(kategoria_szoveg_csere, "", regex=False)
+    megj["Összeg"] = megj["Összeg"].apply(lambda x: f"{fmt_ft(x)} Ft")
+    return megj
 
 st.title("🍂 Közös pénzügyek ✨")
 
@@ -424,19 +430,63 @@ with tab_lista:
     if df.empty:
         st.info("Üres a lista.")
     else:
-        megjelenites_df = df.iloc[::-1].drop(columns=["Sheet_Row"]).copy()
-        megjelenites_df["Összeg"] = megjelenites_df["Összeg"].apply(lambda x: f"{fmt_ft(x)} Ft")
-        st.dataframe(megjelenites_df, use_container_width=True, hide_index=True)
+        bevetel_elozmenyek = df[df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
+        tartozas_elozmenyek = df[df["Kategória"] == "Tartozás"].copy()
+        hitel_elozmenyek = df[df["Kategória"].isin(["Hitel: Keret", "Hitel: Törlesztés"])].copy()
+        kiadas_elozmenyek = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
+
+        # 1. KIADÁSOK (kategória szűrővel)
+        st.subheader("➖ Kiadások")
+        if kiadas_elozmenyek.empty:
+            st.caption("Nincs rögzített kiadás.")
+        else:
+            elerheto_kategoriak = ["Összes"] + sorted(kiadas_elozmenyek["Kategória"].unique().tolist())
+            valasztott_kat = st.pills(
+                "Kategória szűrő",
+                elerheto_kategoriak,
+                default="Összes",
+                key="elozmenyek_kat_szuro",
+            ) or "Összes"
+            szurt_kiadas = kiadas_elozmenyek if valasztott_kat == "Összes" else kiadas_elozmenyek[kiadas_elozmenyek["Kategória"] == valasztott_kat]
+            st.dataframe(formazott_tabla(szurt_kiadas), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        # 2. BEVÉTELEK
+        st.subheader("➕ Bevételek")
+        if bevetel_elozmenyek.empty:
+            st.caption("Nincs rögzített bevétel.")
+        else:
+            st.dataframe(formazott_tabla(bevetel_elozmenyek, "Bevétel: "), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        # 3. TARTOZÁSOK
+        if not tartozas_elozmenyek.empty:
+            st.subheader("💸 Tartozások")
+            st.dataframe(formazott_tabla(tartozas_elozmenyek), use_container_width=True, hide_index=True)
+            st.divider()
+
+        # 4. HITELEK
+        st.subheader("🏦 Hitelek és törlesztések")
+        if hitel_elozmenyek.empty:
+            st.caption("Nincs rögzített hitel vagy törlesztés.")
+        else:
+            hitel_elozmenyek["Kategória"] = hitel_elozmenyek["Kategória"].str.replace("Hitel: ", "", regex=False)
+            st.dataframe(formazott_tabla(hitel_elozmenyek), use_container_width=True, hide_index=True)
+
+        st.divider()
+
         if st.button("🔄 Frissítés a felhőből", use_container_width=True):
             adatok_betoltese.clear()
             hangeffekt("frissites")
             st.toast("Frissítve!", icon="🔄")
             time.sleep(0.4)
             st.rerun()
-        st.divider()
+
         with st.expander("🗑️ Tétel törlése"):
             forditott = df.iloc[::-1]
-            opciok = {r["Sheet_Row"]: f"{r['Dátum']} | {r['Ki']} – {r['Megnevezés']} ({fmt_ft(r['Összeg'])} Ft)" for _, r in forditott.iterrows()}
+            opciok = {r["Sheet_Row"]: f"{r['Dátum']} | [{r['Kategória']}] {r['Ki']} – {r['Megnevezés']} ({fmt_ft(r['Összeg'])} Ft)" for _, r in forditott.iterrows()}
             valasztott = st.selectbox("Törlendő tétel:", options=list(opciok.keys()), format_func=lambda x: opciok[x])
             if st.button("🗑️ Kiválasztott tétel végleges törlése", type="primary", use_container_width=True):
                 with st.spinner("Törlés..."):
