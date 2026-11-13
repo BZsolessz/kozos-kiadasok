@@ -61,7 +61,7 @@ st.markdown(
     button, input, [data-testid="stMetric"], [data-baseweb="tab"] {
         transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
-    button:active { transform: scale(0.98) !important; }
+    button:active { transform: scale(0.97) !important; }
 
     [data-testid="stPills"] button, [data-testid="stPills"] button p, [data-testid="stPills"] button span {
         background: rgba(14, 23, 21, 0.82) !important;
@@ -85,6 +85,22 @@ st.markdown(
         padding: 13px 16px !important;
         backdrop-filter: blur(12px) !important;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
+    }
+    .torles-kartya {
+        background: rgba(16, 26, 24, 0.72);
+        border: 1px solid rgba(251, 191, 36, 0.22);
+        border-radius: 14px;
+        padding: 10px 14px;
+        margin-bottom: 6px;
+        backdrop-filter: blur(10px);
+    }
+    .torles-kartya-aktiv {
+        background: rgba(127, 29, 29, 0.38);
+        border: 1px solid rgba(248, 113, 113, 0.65);
+        border-radius: 14px;
+        padding: 10px 14px;
+        margin-bottom: 6px;
+        box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
     }
     [data-baseweb="popover"], [data-baseweb="menu"], ul[role="listbox"] {
         max-height: 55vh !important;
@@ -149,18 +165,30 @@ def osszeg_mezo(cimke, key, alap_ertek=0):
     return ertek
 
 def formazott_tabla(resz_df, kategoria_szoveg_csere=None):
-    megj = resz_df.iloc[::-1].drop(columns=["Sheet_Row"]).copy()
+    megj = resz_df.iloc[::-1].drop(columns=["Sheet_Row", "Ev_Honap"], errors="ignore").copy()
     if kategoria_szoveg_csere:
         megj["Kategória"] = megj["Kategória"].str.replace(kategoria_szoveg_csere, "", regex=False)
     megj["Összeg"] = megj["Összeg"].apply(lambda x: f"{fmt_ft(x)} Ft")
     return megj
 
-def datum_e_honapban_van_e(datum_ertek, ev, honap):
+def parse_datum(datum_ertek):
     tisztitott = re.sub(r"[.\s/]+", "-", str(datum_ertek).strip()).strip("-")
-    dt = pd.to_datetime(tisztitott, errors="coerce")
+    return pd.to_datetime(tisztitott, errors="coerce")
+
+def datum_e_honapban_van_e(datum_ertek, ev, honap):
+    dt = parse_datum(datum_ertek)
     if pd.isna(dt):
         return False
     return dt.year == ev and dt.month == honap
+
+HONAP_NEVEK = ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"]
+
+def honap_cimke(ym_str):
+    try:
+        ev, ho = ym_str.split("-")
+        return f"{ev}. {HONAP_NEVEK[int(ho) - 1]}"
+    except Exception:
+        return ym_str
 
 st.title("🍂 Közös pénzügyek ✨")
 
@@ -183,10 +211,12 @@ except Exception as e:
 def adatok_betoltese():
     rekordok = sheet.get_all_records()
     if not rekordok:
-        return pd.DataFrame(columns=["Sheet_Row", "Dátum", "Ki", "Kategória", "Megnevezés", "Összeg"])
+        return pd.DataFrame(columns=["Sheet_Row", "Dátum", "Ki", "Kategória", "Megnevezés", "Összeg", "Ev_Honap"])
     df = pd.DataFrame(rekordok)
     df["Sheet_Row"] = range(2, len(df) + 2)
     df["Összeg"] = pd.to_numeric(df["Összeg"], errors="coerce").fillna(0).astype(int)
+    dt_sorozat = df["Dátum"].apply(parse_datum)
+    df["Ev_Honap"] = dt_sorozat.apply(lambda d: f"{d.year}-{d.month:02d}" if pd.notna(d) else "Ismeretlen")
     return df
 
 df = adatok_betoltese()
@@ -255,18 +285,39 @@ with tab_stat:
     if df.empty:
         st.info("Még nincs rögzített tétel.")
     else:
-        bevetelek = df[df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
-        tartozasok = df[df["Kategória"] == "Tartozás"].copy()
-        kiadasok = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
+        # Hónapok szűrése: csak akkor jelenik meg a havi bontó, ha már több mint 1 hónap van
+        nem_hitel_df = df[~df["Kategória"].isin(["Hitel: Keret", "Hitel: Törlesztés"])]
+        elerheto_honapok = sorted([h for h in nem_hitel_df["Ev_Honap"].unique() if h != "Ismeretlen"], reverse=True)
+
+        if len(elerheto_honapok) > 1:
+            opciok_map = {h: f"📅 {honap_cimke(h)}" for h in elerheto_honapok}
+            opciok_map["OSSZES"] = "♾️ Összesített (minden hónap)"
+            valasztott_idoszak = st.pills(
+                "Időszak kiválasztása",
+                options=list(opciok_map.keys()),
+                format_func=lambda x: opciok_map[x],
+                default=elerheto_honapok[0],
+                key="stat_idoszak_valaszto",
+            ) or elerheto_honapok[0]
+            stat_df = df if valasztott_idoszak == "OSSZES" else df[df["Ev_Honap"] == valasztott_idoszak].copy()
+            if valasztott_idoszak != "OSSZES":
+                st.caption(f"🔎 Kiválasztott hónap: **{honap_cimke(valasztott_idoszak)}**")
+        else:
+            stat_df = df.copy()
+
+        bevetelek = stat_df[stat_df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
+        tartozasok = stat_df[stat_df["Kategória"] == "Tartozás"].copy()
+        kiadasok = stat_df[(~stat_df["Kategória"].str.startswith("Bevétel:", na=False)) & (~stat_df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
 
         ossz_bevetel = bevetelek["Összeg"].sum() if not bevetelek.empty else 0
         ossz_kiadas = kiadasok["Összeg"].sum() if not kiadasok.empty else 0
         egyenleg = ossz_bevetel - ossz_kiadas
 
-        st.metric("💵 Jelenleg felhasználható egyenleg", f"{fmt_ft(egyenleg)} Ft")
+        egyenleg_cimke = "💵 Havi egyenleg" if (len(elerheto_honapok) > 1 and valasztott_idoszak != "OSSZES") else "💵 Jelenleg felhasználható egyenleg"
+        st.metric(egyenleg_cimke, f"{fmt_ft(egyenleg)} Ft")
         m1, m2 = st.columns(2)
-        m1.metric("➕ Összes bevétel", f"{fmt_ft(ossz_bevetel)} Ft")
-        m2.metric("➖ Összes kiadás", f"{fmt_ft(ossz_kiadas)} Ft")
+        m1.metric("➕ Bevétel", f"{fmt_ft(ossz_bevetel)} Ft")
+        m2.metric("➖ Kiadás", f"{fmt_ft(ossz_kiadas)} Ft")
 
         if not bevetelek.empty:
             st.divider()
@@ -317,7 +368,6 @@ with tab_hitel:
     if hitel_keretek.empty:
         st.info("Még nincs beállított hitel. Nyisd le az alábbi panelt a hitel adatainak megadásához!")
     else:
-        honap_nevek = ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"]
         ma = date.today()
 
         for _, h_sor in hitel_keretek.iterrows():
@@ -362,7 +412,7 @@ with tab_hitel:
 
             hc1, hc2 = st.columns(2)
             hc1.metric("Jelenlegi tartozás", f"{fmt_ft(hatralevo)} Ft")
-            hc2.metric(f"Ebben a hónapban ({honap_nevek[ma.month - 1]})", f"{fmt_ft(e_havi_levonas)} Ft")
+            hc2.metric(f"Ebben a hónapban ({HONAP_NEVEK[ma.month - 1]})", f"{fmt_ft(e_havi_levonas)} Ft")
 
             if hatralevo == 0:
                 st.success("🎉 Ez a hitel teljesen ki van fizetve!")
@@ -379,7 +429,7 @@ with tab_hitel:
                     hatralevo_honapok = -(-hatralevo // havi_torleszto)
                     cel_ev = ma.year + (ma.month - 1 + hatralevo_honapok) // 12
                     cel_honap = (ma.month - 1 + hatralevo_honapok) % 12 + 1
-                    st.info(f"⏳ Havi **{fmt_ft(havi_torleszto)} Ft**-os törlesztővel még **{hatralevo_honapok} hónap** van hátra → Várható lejárat: **{cel_ev}. {honap_nevek[cel_honap - 1]}**")
+                    st.info(f"⏳ Havi **{fmt_ft(havi_torleszto)} Ft**-os törlesztővel még **{hatralevo_honapok} hónap** van hátra → Várható lejárat: **{cel_ev}. {HONAP_NEVEK[cel_honap - 1]}**")
             st.divider()
 
         with st.expander("💸 Havi levonás / törlesztés rögzítése", expanded=True):
@@ -495,15 +545,57 @@ with tab_lista:
             time.sleep(0.4)
             st.rerun()
 
-        with st.expander("🗑️ Tétel törlése"):
-            forditott = df.iloc[::-1]
-            opciok = {r["Sheet_Row"]: f"{r['Dátum']} | [{r['Kategória']}] {r['Ki']} – {r['Megnevezés']} ({fmt_ft(r['Összeg'])} Ft)" for _, r in forditott.iterrows()}
-            valasztott = st.selectbox("Törlendő tétel:", options=list(opciok.keys()), format_func=lambda x: opciok[x])
-            if st.button("🗑️ Kiválasztott tétel végleges törlése", type="primary", use_container_width=True):
-                with st.spinner("Törlés..."):
-                    sheet.delete_rows(int(valasztott))
-                adatok_betoltese.clear()
-                hangeffekt("torles")
-                st.toast("Tétel törölve!", icon="🗑️")
-                time.sleep(0.7)
-                st.rerun()
+        st.divider()
+
+        # Látványos, kártyás, gyors törlés keresővel és azonnali megerősítéssel
+        st.subheader("🗑️ Tételek kezelése és törlése")
+        kereso = st.text_input("🔍 Gyorskereső (név, kategória vagy dátum)", placeholder="pl. Lidl, Zsolt, Hitel...", key="torles_kereso").strip().lower()
+        forditott = df.iloc[::-1]
+        if kereso:
+            maszk = (
+                forditott["Megnevezés"].astype(str).str.lower().str.contains(kereso, na=False)
+                | forditott["Kategória"].astype(str).str.lower().str.contains(kereso, na=False)
+                | forditott["Ki"].astype(str).str.lower().str.contains(kereso, na=False)
+                | forditott["Dátum"].astype(str).str.lower().str.contains(kereso, na=False)
+            )
+            forditott = forditott[maszk]
+
+        megerositendo_sor = st.session_state.get("torles_megerosites_sor")
+
+        for _, r in forditott.head(15).iterrows():
+            sor_id = int(r["Sheet_Row"])
+            aktiv = (megerositendo_sor == sor_id)
+            kartya_osztaly = "torles-kartya-aktiv" if aktiv else "torles-kartya"
+            kat_tiszta = str(r["Kategória"]).replace("Bevétel: ", "")
+            nev_tiszta = str(r["Megnevezés"]).split("|")[0].strip()
+
+            k_col1, k_col2 = st.columns([4, 1.4], vertical_alignment="center")
+            with k_col1:
+                st.markdown(
+                    f"""<div class="{kartya_osztaly}">
+                        <div style="font-size:0.78rem; color:#cbd5e1;">📅 {r['Dátum']} • <b>{r['Ki']}</b> • {kat_tiszta}</div>
+                        <div style="font-size:1.0rem; font-weight:600; color:#f8fafc; margin-top:2px;">{nev_tiszta} — <span style="color:#fbbf24;">{fmt_ft(r['Összeg'])} Ft</span></div>
+                    </div>""",
+                    unsafe_allow_html=True,
+                )
+            with k_col2:
+                if not aktiv:
+                    if st.button("🗑️", key=f"del_btn_{sor_id}", use_container_width=True, help="Tétel törlése"):
+                        st.session_state["torles_megerosites_sor"] = sor_id
+                        st.rerun()
+                else:
+                    if st.button("✅ Biztos?", key=f"conf_del_{sor_id}", type="primary", use_container_width=True):
+                        with st.spinner("Törlés..."):
+                            sheet.delete_rows(sor_id)
+                        st.session_state["torles_megerosites_sor"] = None
+                        adatok_betoltese.clear()
+                        hangeffekt("torles")
+                        st.toast("Tétel véglegesen törölve!", icon="🗑️")
+                        time.sleep(0.6)
+                        st.rerun()
+                    if st.button("✖️ Mégse", key=f"canc_del_{sor_id}", use_container_width=True):
+                        st.session_state["torles_megerosites_sor"] = None
+                        st.rerun()
+
+        if len(forditott) > 15:
+            st.caption(f"A legutóbbi 15 tétel látható. Használd a fenti gyorskeresőt a régebbi tételek megtalálásához (összesen {len(forditott)} találat).")
