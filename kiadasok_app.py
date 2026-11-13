@@ -20,7 +20,6 @@ st.markdown(
         color: #f8fafc !important;
         scroll-behavior: smooth !important;
     }
-    /* Új: Mély éjszakai fenyő & meleg arany ambient háttér */
     [data-testid="stAppViewContainer"] {
         background-color: #080d0c !important;
         background-image:
@@ -31,7 +30,6 @@ st.markdown(
             linear-gradient(155deg, #070c0b 0%, #0e1917 48%, #16120d 100%) !important;
         background-attachment: fixed !important;
     }
-    /* Lassan úszó, meleg arany fényrészecskék (zavaró esőcsíkok nélkül) */
     [data-testid="stAppViewContainer"]::before {
         content: "";
         position: fixed;
@@ -53,13 +51,11 @@ st.markdown(
     }
     [data-testid="stHeader"] { background: transparent !important; }
 
-    /* Fluid átmenetek */
     button, input, [data-testid="stMetric"], [data-baseweb="tab"] {
         transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
     button:active { transform: scale(0.98) !important; }
 
-    /* Kategória gombok (st.pills) */
     [data-testid="stPills"] button, [data-testid="stPills"] button p, [data-testid="stPills"] button span {
         background: rgba(14, 23, 21, 0.82) !important;
         color: #f1f5f9 !important;
@@ -75,7 +71,6 @@ st.markdown(
         box-shadow: 0 0 14px rgba(245, 158, 11, 0.32) !important;
     }
 
-    /* Üveghatású kártyák */
     [data-testid="stMetric"] {
         background: rgba(13, 22, 20, 0.68) !important;
         border: 1px solid rgba(251, 191, 36, 0.24) !important;
@@ -156,7 +151,7 @@ def adatok_betoltese():
     return df
 
 df = adatok_betoltese()
-tab_uj, tab_stat, tab_lista = st.tabs(["🍁 Új tétel", "📊 Statisztika", "📜 Előzmények"])
+tab_uj, tab_stat, tab_hitel, tab_lista = st.tabs(["🍁 Új tétel", "📊 Statisztika", "🏦 Hitel", "📜 Előzmények"])
 
 with tab_uj:
     tipus = st.radio("Művelet típusa", ["➖ Kiadás", "➕ Bevétel"], horizontal=True)
@@ -173,7 +168,7 @@ with tab_uj:
     else:
         kategoria = st.pills(
             "Kategória",
-            ["Élelmiszer & Háztartás", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
+            ["Élelmiszer & Háztartás", "Dohánybolt", "Ajándékozás", "Előfizetés", "Tartozás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Egyéb"],
             default="Élelmiszer & Háztartás",
         ) or "Élelmiszer & Háztartás"
         if kategoria == "Tartozás":
@@ -184,11 +179,14 @@ with tab_uj:
             ki = ki_tartozik
         else:
             ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
-        megnevezes = st.text_input(
-            "Mire vonatkozik?" if kategoria == "Tartozás"
-            else ("Melyik előfizetés? (pl. Netflix, Apple Music, Internet)" if kategoria == "Előfizetés"
-            else "Mit vettetek? (pl. Lidl, Kávézó)")
-        )
+        
+        placeholder_szoveg = {
+            "Tartozás": "Mire vonatkozik?",
+            "Előfizetés": "Melyik előfizetés? (pl. Netflix, Apple Music, Internet)",
+            "Dohánybolt": "Mit vettetek? (pl. Trafik, Üdítő)",
+            "Ajándékozás": "Kinek és mit? (pl. Szülinapi ajándék)",
+        }.get(kategoria, "Mit vettetek? (pl. Lidl, Kávézó)")
+        megnevezes = st.text_input(placeholder_szoveg)
 
     osszeg = st.number_input("Összeg (Ft)", min_value=0, step=500)
     datum = st.date_input("Dátum", value=date.today())
@@ -219,7 +217,7 @@ with tab_stat:
     else:
         bevetelek = df[df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
         tartozasok = df[df["Kategória"] == "Tartozás"].copy()
-        kiadasok = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (df["Kategória"] != "Tartozás")].copy()
+        kiadasok = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
 
         ossz_bevetel = bevetelek["Összeg"].sum() if not bevetelek.empty else 0
         ossz_kiadas = kiadasok["Összeg"].sum() if not kiadasok.empty else 0
@@ -259,7 +257,7 @@ with tab_stat:
                 names="Kategória",
                 hole=0.45,
                 title="Kiadások megoszlása",
-                color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6"],
+                color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6", "#a855f7", "#14b8a6"],
             )
             fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
             st.plotly_chart(fig_ki, use_container_width=True)
@@ -270,6 +268,97 @@ with tab_stat:
             tartozasok["Irány"] = tartozasok["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok["Ki"])
             for _, sor in tartozasok.groupby("Irány", as_index=False)["Összeg"].sum().iterrows():
                 st.metric(sor["Irány"], f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
+
+with tab_hitel:
+    st.subheader("🏦 Hitel és törlesztés követő")
+    hitel_keretek = df[df["Kategória"] == "Hitel: Keret"].copy()
+    hitel_torlesztesek = df[df["Kategória"] == "Hitel: Törlesztés"].copy()
+
+    if hitel_keretek.empty:
+        st.info("Még nincs beállított hitel. Nyisd le az alábbi panelt az első hitel rögzítéséhez!")
+    else:
+        honap_nevek = ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"]
+        akt_honap = date.today().strftime("%Y-%m")
+
+        for _, h_sor in hitel_keretek.iterrows():
+            # Formátum: "Hitel neve | havi:25000"
+            reszek = str(h_sor["Megnevezés"]).split("|")
+            h_nev = reszek[0].strip()
+            havi_torleszto = 0
+            if len(reszek) > 1 and "havi:" in reszek[1]:
+                try:
+                    havi_torleszto = int(reszek[1].replace("havi:", "").strip())
+                except ValueError:
+                    havi_torleszto = 0
+
+            teljes_osszeg = int(h_sor["Összeg"])
+            kapcsolodo_befizetesek = hitel_torlesztesek[hitel_torlesztesek["Megnevezés"].str.startswith(h_nev, na=False)]
+            eddig_kifizetve = int(kapcsolodo_befizetesek["Összeg"].sum()) if not kapcsolodo_befizetesek.empty else 0
+            e_havi_levonas = int(kapcsolodo_befizetesek[kapcsolodo_befizetesek["Dátum"].astype(str).str.startswith(akt_honap)]["Összeg"].sum()) if not kapcsolodo_befizetesek.empty else 0
+            hatralevo = max(0, teljes_osszeg - eddig_kifizetve)
+            szazalek = min(1.0, eddig_kifizetve / teljes_osszeg) if teljes_osszeg > 0 else 0.0
+
+            st.markdown(f"### 📌 {h_nev}")
+            st.progress(szazalek, text=f"Kifizetve: {szazalek*100:.1f}% ({eddig_kifizetve:,.0f} Ft / {teljes_osszeg:,.0f} Ft)".replace(",", " "))
+
+            hc1, hc2 = st.columns(2)
+            hc1.metric("Hátralévő tartozás", f"{hatralevo:,.0f} Ft".replace(",", " "))
+            hc2.metric("Ebben a hónapban levonva", f"{e_havi_levonas:,.0f} Ft".replace(",", " "))
+
+            if hatralevo == 0:
+                st.success("🎉 Ez a hitel teljesen ki van fizetve!")
+            elif havi_torleszto > 0:
+                hatralevo_honapok = -(-hatralevo // havi_torleszto)  # felfelé kerekítés
+                ma = date.today()
+                cel_ev = ma.year + (ma.month - 1 + hatralevo_honapok) // 12
+                cel_honap = (ma.month - 1 + hatralevo_honapok) % 12 + 1
+                st.info(f"⏳ Havi **{havi_torleszto:,.0f} Ft**-os törlesztővel még **{hatralevo_honapok} hónap** van hátra → Várható lejárat: **{cel_ev}. {honap_nevek[cel_honap - 1]}**".replace(",", " "))
+            st.divider()
+
+        # Havi levonás rögzítése
+        with st.expander("💸 Havi levonás / törlesztés rögzítése", expanded=True):
+            hitel_nevek = [str(x).split("|")[0].strip() for x in hitel_keretek["Megnevezés"]]
+            valasztott_hitel = st.selectbox("Melyik hitelhez?", hitel_nevek)
+            # Alapértelmezett összegként betölti a beállított havi törlesztőt
+            alap_torleszto = 0
+            for _, h_sor in hitel_keretek.iterrows():
+                if str(h_sor["Megnevezés"]).split("|")[0].strip() == valasztott_hitel and "havi:" in str(h_sor["Megnevezés"]):
+                    try:
+                        alap_torleszto = int(str(h_sor["Megnevezés"]).split("havi:")[1].strip())
+                    except ValueError:
+                        alap_torleszto = 0
+            levont_osszeg = st.number_input("Levont összeg (Ft)", min_value=0, value=alap_torleszto, step=500, key="hitel_levonas_osszeg")
+            levonas_datum = st.date_input("Levonás dátuma", value=date.today(), key="hitel_levonas_datum")
+
+            if st.button("✅ Levonás rögzítése", use_container_width=True, type="primary"):
+                if levont_osszeg <= 0:
+                    hangeffekt("hiba")
+                    st.warning("Adj meg 0-nál nagyobb összeget!")
+                else:
+                    with st.spinner("Rögzítés..."):
+                        sheet.append_row([str(levonas_datum), "Zsolt", "Hitel: Törlesztés", f"{valasztott_hitel} – törlesztés", int(levont_osszeg)])
+                    adatok_betoltese.clear()
+                    hangeffekt("siker")
+                    st.toast("Havi levonás rögzítve!", icon="🏦")
+                    time.sleep(0.9)
+                    st.rerun()
+
+    with st.expander("⚙️ Új hitel beállítása"):
+        uj_hitel_nev = st.text_input("Hitel neve (pl. Telefon részlet, Személyi kölcsön)").strip()
+        uj_hitel_teljes = st.number_input("Teljes visszafizetendő összeg (Ft)", min_value=0, step=5000, key="uj_hitel_teljes")
+        uj_hitel_havi = st.number_input("Havi törlesztőrészlet (Ft)", min_value=0, step=1000, key="uj_hitel_havi")
+        if st.button("💾 Hitel mentése", use_container_width=True):
+            if not uj_hitel_nev or uj_hitel_teljes <= 0:
+                hangeffekt("hiba")
+                st.warning("Add meg a hitel nevét és a teljes összeget!")
+            else:
+                with st.spinner("Mentés..."):
+                    sheet.append_row([str(date.today()), "Zsolt", "Hitel: Keret", f"{uj_hitel_nev} | havi:{int(uj_hitel_havi)}", int(uj_hitel_teljes)])
+                adatok_betoltese.clear()
+                hangeffekt("siker")
+                st.toast(f"Hitel létrehozva: {uj_hitel_nev}!", icon="🏦")
+                time.sleep(0.9)
+                st.rerun()
 
 with tab_lista:
     if df.empty:
