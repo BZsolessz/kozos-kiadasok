@@ -155,6 +155,13 @@ def formazott_tabla(resz_df, kategoria_szoveg_csere=None):
     megj["Összeg"] = megj["Összeg"].apply(lambda x: f"{fmt_ft(x)} Ft")
     return megj
 
+def datum_e_honapban_van_e(datum_ertek, ev, honap):
+    tisztitott = re.sub(r"[.\s/]+", "-", str(datum_ertek).strip()).strip("-")
+    dt = pd.to_datetime(tisztitott, errors="coerce")
+    if pd.isna(dt):
+        return False
+    return dt.year == ev and dt.month == honap
+
 st.title("🍂 Közös pénzügyek ✨")
 
 @st.cache_resource
@@ -311,7 +318,7 @@ with tab_hitel:
         st.info("Még nincs beállított hitel. Nyisd le az alábbi panelt a hitel adatainak megadásához!")
     else:
         honap_nevek = ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"]
-        akt_honap = date.today().strftime("%Y-%m")
+        ma = date.today()
 
         for _, h_sor in hitel_keretek.iterrows():
             reszek = [r.strip() for r in str(h_sor["Megnevezés"]).split("|")]
@@ -331,9 +338,18 @@ with tab_hitel:
                     vege_datum_str = r.replace("vege:", "").strip()
 
             teljes_osszeg = int(h_sor["Összeg"])
-            kapcsolodo_befizetesek = hitel_torlesztesek[hitel_torlesztesek["Megnevezés"].str.startswith(h_nev, na=False)]
+            kapcsolodo_befizetesek = hitel_torlesztesek[hitel_torlesztesek["Megnevezés"].str.startswith(h_nev, na=False)].copy()
             eddig_kifizetve = int(kapcsolodo_befizetesek["Összeg"].sum()) if not kapcsolodo_befizetesek.empty else 0
-            e_havi_levonas = int(kapcsolodo_befizetesek[kapcsolodo_befizetesek["Dátum"].astype(str).str.startswith(akt_honap)]["Összeg"].sum()) if not kapcsolodo_befizetesek.empty else 0
+
+            if not kapcsolodo_befizetesek.empty:
+                ehavi_maszk = (
+                    kapcsolodo_befizetesek["Dátum"].apply(lambda d: datum_e_honapban_van_e(d, ma.year, ma.month))
+                    & (~kapcsolodo_befizetesek["Megnevezés"].str.contains("korábbi törlesztések", na=False))
+                )
+                e_havi_levonas = int(kapcsolodo_befizetesek[ehavi_maszk]["Összeg"].sum())
+            else:
+                e_havi_levonas = 0
+
             hatralevo = max(0, teljes_osszeg - eddig_kifizetve)
             szazalek = min(1.0, eddig_kifizetve / teljes_osszeg) if teljes_osszeg > 0 else 0.0
 
@@ -346,12 +362,11 @@ with tab_hitel:
 
             hc1, hc2 = st.columns(2)
             hc1.metric("Jelenlegi tartozás", f"{fmt_ft(hatralevo)} Ft")
-            hc2.metric("Ebben a hónapban levonva", f"{fmt_ft(e_havi_levonas)} Ft")
+            hc2.metric(f"Ebben a hónapban ({honap_nevek[ma.month - 1]})", f"{fmt_ft(e_havi_levonas)} Ft")
 
             if hatralevo == 0:
                 st.success("🎉 Ez a hitel teljesen ki van fizetve!")
             else:
-                ma = date.today()
                 if vege_datum_str:
                     try:
                         vege_dt = date.fromisoformat(vege_datum_str)
@@ -435,7 +450,6 @@ with tab_lista:
         hitel_elozmenyek = df[df["Kategória"].isin(["Hitel: Keret", "Hitel: Törlesztés"])].copy()
         kiadas_elozmenyek = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
 
-        # 1. KIADÁSOK (kategória szűrővel)
         st.subheader("➖ Kiadások")
         if kiadas_elozmenyek.empty:
             st.caption("Nincs rögzített kiadás.")
@@ -452,7 +466,6 @@ with tab_lista:
 
         st.divider()
 
-        # 2. BEVÉTELEK
         st.subheader("➕ Bevételek")
         if bevetel_elozmenyek.empty:
             st.caption("Nincs rögzített bevétel.")
@@ -461,13 +474,11 @@ with tab_lista:
 
         st.divider()
 
-        # 3. TARTOZÁSOK
         if not tartozas_elozmenyek.empty:
             st.subheader("💸 Tartozások")
             st.dataframe(formazott_tabla(tartozas_elozmenyek), use_container_width=True, hide_index=True)
             st.divider()
 
-        # 4. HITELEK
         st.subheader("🏦 Hitelek és törlesztések")
         if hitel_elozmenyek.empty:
             st.caption("Nincs rögzített hitel vagy törlesztés.")
