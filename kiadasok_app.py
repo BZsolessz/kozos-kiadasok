@@ -137,4 +137,41 @@ with tab_uj:
                 siker_hang()
                 st.balloons()
                 st.toast(f"Sikeresen mentve: {megnevezes}!", icon="✅")
-                st.success(f"Rögzítve: {megnevezes} ({osszeg:,} Ft
+                st.success(f"Rögzítve: {megnevezes} ({osszeg:,} Ft)".replace(",", " "))
+                time.sleep(1.5)
+                st.rerun()
+
+# 2. FÜL: KÖZÖS STATISZTIKA ÉS GRAFIKON
+with tab_stat:
+    if df.empty:
+        st.info("Még nincs rögzített tétel a táblázatban.")
+    else:
+        osszes = df["Összeg"].sum()
+        zsolt_ossz = df[df["Ki"] == "Zsolt"]["Összeg"].sum()
+        vivien_ossz = df[df["Ki"] == "Vivien"]["Összeg"].sum()
+
+        st.metric("Összes közös kiadás", f"{osszes:,.0f} Ft".replace(",", " "))
+        
+        col1, col2 = st.columns(2)
+        col1.metric("Zsolt", f"{zsolt_ossz:,.0f} Ft".replace(",", " "))
+        col2.metric("Vivien", f"{vivien_ossz:,.0f} Ft".replace(",", " "))
+
+        st.divider()
+
+        # Kördiagram kategóriánként
+        kat_df = df.groupby("Kategória", as_index=False)["Összeg"].sum()
+        fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
+        fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+        st.plotly_chart(fig, use_container_width=True)
+
+# 3. FÜL: ELŐZMÉNYEK ÉS FRISSÍTÉS
+with tab_lista:
+    if df.empty:
+        st.info("Üres a lista.")
+    else:
+        st.dataframe(df.iloc[::-1], use_container_width=True, hide_index=True)
+        
+        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
+            st.toast("Adatok frissítve!", icon="🔄")
+            time.sleep(0.5)
+            st.rerun()
