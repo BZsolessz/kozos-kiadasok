@@ -8,7 +8,7 @@ import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Közös pénzügyek 🍂", page_icon="🍂", layout="centered")
+st.set_page_config(page_title="Közös pénzügyek 🍂", page_icon="🍂", layout="wide")
 
 if st.session_state.pop("reset_uj_tetel", False):
     st.session_state["uj_tetel_osszeg"] = ""
@@ -59,22 +59,41 @@ st.markdown(
 
     [data-testid="stHeader"] {
         background: transparent !important;
-        height: 0.5rem !important;
+        height: 0.4rem !important;
     }
     [data-testid="stDecoration"] {
         display: none !important;
     }
+
+    /* Automatikus PC vs Mobil konténer méretezés */
     .block-container {
-        padding-top: 1.1rem !important;
-        padding-bottom: 2.5rem !important;
+        max-width: 1120px !important;
+        padding-top: 1.0rem !important;
+        padding-left: 1.6rem !important;
+        padding-right: 1.6rem !important;
+        padding-bottom: 2.2rem !important;
+        margin: 0 auto !important;
+    }
+    @media (max-width: 899px) {
+        .block-container {
+            max-width: 100% !important;
+            padding-top: 0.7rem !important;
+            padding-left: 0.85rem !important;
+            padding-right: 0.85rem !important;
+            padding-bottom: 1.8rem !important;
+        }
+        /* Mobilon az oszlopok egymás alá rendeződnek a kényelmes érintéshez */
+        [data-testid="stHorizontalBlock"].pc-split {
+            flex-direction: column !important;
+        }
     }
 
     .top-nav-hero {
         background: linear-gradient(135deg, rgba(16, 28, 25, 0.86) 0%, rgba(24, 20, 15, 0.84) 100%);
         border: 1px solid rgba(251, 191, 36, 0.28);
-        border-radius: 20px;
-        padding: 14px 18px;
-        margin-bottom: 14px;
+        border-radius: 18px;
+        padding: 12px 18px;
+        margin-bottom: 12px;
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -85,7 +104,7 @@ st.markdown(
         flex-wrap: wrap;
     }
     .top-nav-title {
-        font-size: 1.28rem;
+        font-size: 1.24rem;
         font-weight: 700;
         letter-spacing: -0.01em;
         color: #f8fafc;
@@ -94,15 +113,35 @@ st.markdown(
         gap: 8px;
     }
     .top-nav-sub {
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         color: #cbd5e1;
         margin-top: 2px;
     }
+    .top-nav-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .device-pill {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        padding: 5px 11px;
+        font-size: 0.72rem;
+        color: #cbd5e1;
+    }
+    .device-pill::after { content: "💻 PC nézet"; }
+    @media (max-width: 899px) {
+        .device-pill::after { content: "📱 Mobil nézet"; }
+        .top-nav-hero { padding: 10px 14px; }
+        .top-nav-title { font-size: 1.12rem; }
+    }
+
     .top-nav-badge {
         background: rgba(16, 185, 129, 0.16);
         border: 1px solid rgba(52, 211, 153, 0.42);
         border-radius: 999px;
-        padding: 7px 14px;
+        padding: 6px 14px;
         text-align: right;
         box-shadow: 0 0 16px rgba(16, 185, 129, 0.16);
     }
@@ -110,18 +149,18 @@ st.markdown(
         background: rgba(245, 158, 11, 0.16);
         border: 1px solid rgba(251, 191, 36, 0.45);
         border-radius: 999px;
-        padding: 7px 14px;
+        padding: 6px 14px;
         text-align: right;
     }
     .top-nav-badge-label {
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #94a3b8;
         display: block;
     }
     .top-nav-badge-val {
-        font-size: 0.98rem;
+        font-size: 0.95rem;
         font-weight: 700;
         color: #6ee7b7;
     }
@@ -132,17 +171,17 @@ st.markdown(
     [data-testid="stTabs"] [role="tablist"] {
         background: rgba(11, 19, 17, 0.78) !important;
         border: 1px solid rgba(251, 191, 36, 0.22) !important;
-        border-radius: 16px !important;
-        padding: 5px !important;
-        gap: 5px !important;
+        border-radius: 15px !important;
+        padding: 4px !important;
+        gap: 4px !important;
         backdrop-filter: blur(14px) !important;
         display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
     }
     [data-testid="stTabs"] [role="tab"] {
-        border-radius: 12px !important;
-        padding: 9px 4px !important;
+        border-radius: 11px !important;
+        padding: 8px 4px !important;
         margin: 0 !important;
         justify-content: center !important;
         color: #cbd5e1 !important;
@@ -175,14 +214,13 @@ st.markdown(
     }
     button:active { transform: scale(0.97) !important; }
 
-    /* Kategória rács gombok (szellős, nem folyik egybe) */
     button[kind="secondary"] {
         background: rgba(14, 24, 22, 0.82) !important;
         border: 1px solid rgba(255, 255, 255, 0.11) !important;
-        border-radius: 14px !important;
+        border-radius: 13px !important;
         color: #e2e8f0 !important;
-        min-height: 46px !important;
-        padding: 8px 10px !important;
+        min-height: 44px !important;
+        padding: 7px 10px !important;
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
     }
     button[kind="secondary"]:hover {
@@ -191,7 +229,7 @@ st.markdown(
         color: #ffffff !important;
     }
     button[kind="secondary"] p {
-        font-size: 0.86rem !important;
+        font-size: 0.85rem !important;
         font-weight: 500 !important;
     }
 
@@ -200,8 +238,8 @@ st.markdown(
         border: 1px solid rgba(251, 191, 36, 0.45);
         border-radius: 12px;
         padding: 7px 13px;
-        margin: 4px 0 12px 0;
-        font-size: 0.85rem;
+        margin: 4px 0 10px 0;
+        font-size: 0.84rem;
         color: #fef3c7;
         display: flex;
         align-items: center;
@@ -226,28 +264,107 @@ st.markdown(
     [data-testid="stMetric"] {
         background: rgba(13, 22, 20, 0.68) !important;
         border: 1px solid rgba(251, 191, 36, 0.24) !important;
-        border-radius: 16px !important;
-        padding: 13px 16px !important;
+        border-radius: 15px !important;
+        padding: 11px 14px !important;
         backdrop-filter: blur(12px) !important;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
     }
-    .kat-arany-sor {
+
+    /* Új kompakt Statisztika kártyák */
+    .stat-glass-card {
+        background: linear-gradient(145deg, rgba(15, 25, 23, 0.82), rgba(11, 18, 16, 0.78));
+        border: 1px solid rgba(251, 191, 36, 0.22);
+        border-radius: 18px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+    .stat-card-header {
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #fbbf24;
+        margin-bottom: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 8px;
+    }
+    .stat-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    @media (max-width: 540px) {
+        .stat-kpi-grid { grid-template-columns: 1fr; }
+    }
+    .stat-kpi-box {
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 13px;
+        padding: 10px 12px;
+    }
+    .stat-kpi-lbl {
+        font-size: 0.72rem;
+        color: #94a3b8;
         margin-bottom: 3px;
-        font-size: 0.92rem;
+    }
+    .stat-kpi-num {
+        font-size: 1.12rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+    .split-bar-wrap {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        overflow: hidden;
+        display: flex;
+        margin: 8px 0 6px 0;
+    }
+    .split-bar-zsolt {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        height: 100%;
+    }
+    .split-bar-vivien {
+        background: linear-gradient(90deg, #10b981, #34d399);
+        height: 100%;
+    }
+    .compact-cat-row {
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .compact-cat-row:last-child { border-bottom: none; }
+    .compact-cat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.86rem;
+        margin-bottom: 4px;
+    }
+    .compact-cat-bar-bg {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .compact-cat-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #f59e0b, #10b981);
     }
     .kat-arany-szazalek {
-        background: rgba(245, 158, 11, 0.22);
-        border: 1px solid rgba(251, 191, 36, 0.45);
+        background: rgba(245, 158, 11, 0.20);
+        border: 1px solid rgba(251, 191, 36, 0.42);
         color: #fcd34d;
         font-weight: 700;
-        font-size: 0.80rem;
-        padding: 2px 9px;
+        font-size: 0.74rem;
+        padding: 1px 7px;
         border-radius: 999px;
-        margin-left: 6px;
+        margin-left: 5px;
     }
 
     /* Modern előzmény kártyák */
@@ -255,20 +372,20 @@ st.markdown(
         background: rgba(13, 22, 20, 0.65);
         border: 1px solid rgba(251, 191, 36, 0.20);
         border-radius: 14px;
-        padding: 9px 14px;
-        margin: 6px 0 12px 0;
+        padding: 8px 14px;
+        margin: 6px 0 10px 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.84rem;
+        font-size: 0.83rem;
         color: #cbd5e1;
     }
     .tx-card {
         background: linear-gradient(135deg, rgba(16, 26, 24, 0.82), rgba(12, 20, 18, 0.76));
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-left: 4px solid #f59e0b;
-        border-radius: 15px;
-        padding: 11px 14px;
+        border-radius: 14px;
+        padding: 10px 13px;
         margin-bottom: 4px;
         backdrop-filter: blur(12px);
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
@@ -287,15 +404,15 @@ st.markdown(
         box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
     }
     .tx-title {
-        font-size: 0.98rem;
+        font-size: 0.95rem;
         font-weight: 600;
         color: #f8fafc;
         line-height: 1.25;
     }
     .tx-meta {
-        font-size: 0.75rem;
+        font-size: 0.74rem;
         color: #94a3b8;
-        margin-top: 4px;
+        margin-top: 3px;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -307,10 +424,10 @@ st.markdown(
         color: #e2e8f0;
         padding: 1px 8px;
         border-radius: 999px;
-        font-size: 0.71rem;
+        font-size: 0.70rem;
     }
     .tx-amount {
-        font-size: 1.02rem;
+        font-size: 0.98rem;
         font-weight: 700;
         white-space: nowrap;
         text-align: right;
@@ -383,7 +500,6 @@ def osszeg_mezo(cimke, key, alap_ertek=0):
     return ertek
 
 def kategoria_racs_valaszto(opciok_lista, state_key):
-    """2 oszlopos, szellős érintőkártya-rács a kategóriákhoz."""
     if state_key not in st.session_state or st.session_state[state_key] not in [o[0] for o in opciok_lista]:
         st.session_state[state_key] = opciok_lista[0][0]
 
@@ -478,9 +594,12 @@ st.markdown(
             <div class="top-nav-title">🍂 Közös pénzügyek</div>
             <div class="top-nav-sub">Zsolt &amp; Vivien • {ma_fejlec.year}. {HONAP_NEVEK[ma_fejlec.month - 1]} {ma_fejlec.day}.</div>
         </div>
-        <div class="{badge_osztaly}">
-            <span class="top-nav-badge-label">Kassza egyenleg</span>
-            <span class="top-nav-badge-val">{fmt_ft(aktualis_egyenleg)} Ft</span>
+        <div class="top-nav-right">
+            <span class="device-pill"></span>
+            <div class="{badge_osztaly}">
+                <span class="top-nav-badge-label">Kassza egyenleg</span>
+                <span class="top-nav-badge-val">{fmt_ft(aktualis_egyenleg)} Ft</span>
+            </div>
         </div>
     </div>""",
     unsafe_allow_html=True,
@@ -489,75 +608,81 @@ st.markdown(
 tab_uj, tab_stat, tab_hitel, tab_lista = st.tabs(["🍁 Új tétel", "📊 Statisztika", "🏦 Hitel", "📜 Előzmények"])
 
 with tab_uj:
-    tipus = st.radio("Művelet típusa", ["➖ Kiadás", "➕ Bevétel"], horizontal=True)
+    col_uj_bal, col_uj_jobb = st.columns([1.25, 1], gap="large")
+    with col_uj_bal:
+        tipus = st.radio("Művelet típusa", ["➖ Kiadás", "➕ Bevétel"], horizontal=True)
 
-    if tipus == "➕ Bevétel":
-        bevetel_opciok = [
-            ("Közös kasszába befizetés", "💰 Kassza befizetés"),
-            ("Ajándék / Támogatás", "🎁 Ajándék / Támogatás"),
-            ("Eladás / Visszatérítés", "🔄 Eladás / Visszatérítés"),
-            ("Egyéb bevétel", "✨ Egyéb bevétel"),
-        ]
-        kategoria_valasztott = kategoria_racs_valaszto(bevetel_opciok, "valasztott_bev_kat")
-        kategoria = f"Bevétel: {kategoria_valasztott}"
-        ki = st.text_input("Kitől kaptuk / Ki tette bele?", placeholder="pl. Zsolt, Vivien, Szülők").strip()
-        megnevezes = st.text_input("Megnevezés (pl. Havi keret, Visszatérítés)")
-    else:
-        kiadas_opciok = [
-            ("Élelmiszer & Háztartás", "🛒 Élelmiszer"),
-            ("Gyógyszertár", "💊 Gyógyszertár"),
-            ("Dohánybolt", "🚬 Dohánybolt"),
-            ("Étterem & Randi", "🍽️ Étterem & Randi"),
-            ("Üzemanyag & Autó", "⛽ Autó & Üzemanyag"),
-            ("Lakhatás & Rezsi", "🏠 Lakhatás & Rezsi"),
-            ("Előfizetés", "📱 Előfizetés"),
-            ("Ajándékozás", "🎁 Ajándékozás"),
-            ("Tech & Vásárlás", "💻 Tech & Vásárlás"),
-            ("Tartozás", "💸 Tartozás"),
-            ("Egyéb", "📦 Egyéb"),
-        ]
-        kategoria = kategoria_racs_valaszto(kiadas_opciok, "valasztott_ki_kat")
-        if kategoria == "Tartozás":
-            st.info("💸 **Tartozás rögzítése**")
-            c1, c2 = st.columns(2)
-            ki_tartozik = c1.text_input("Ki tartozik?", placeholder="pl. Zsolt").strip()
-            kinek_tartozik = c2.text_input("Kinek tartozik?", placeholder="pl. Vivien").strip()
-            ki = ki_tartozik
+        if tipus == "➕ Bevétel":
+            bevetel_opciok = [
+                ("Közös kasszába befizetés", "💰 Kassza befizetés"),
+                ("Ajándék / Támogatás", "🎁 Ajándék / Támogatás"),
+                ("Eladás / Visszatérítés", "🔄 Eladás / Visszatérítés"),
+                ("Egyéb bevétel", "✨ Egyéb bevétel"),
+            ]
+            kategoria_valasztott = kategoria_racs_valaszto(bevetel_opciok, "valasztott_bev_kat")
+            kategoria = f"Bevétel: {kategoria_valasztott}"
         else:
-            ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
+            kiadas_opciok = [
+                ("Élelmiszer & Háztartás", "🛒 Élelmiszer"),
+                ("Gyógyszertár", "💊 Gyógyszertár"),
+                ("Dohánybolt", "🚬 Dohánybolt"),
+                ("Étterem & Randi", "🍽️ Étterem & Randi"),
+                ("Üzemanyag & Autó", "⛽ Autó & Üzemanyag"),
+                ("Lakhatás & Rezsi", "🏠 Lakhatás & Rezsi"),
+                ("Előfizetés", "📱 Előfizetés"),
+                ("Ajándékozás", "🎁 Ajándékozás"),
+                ("Tech & Vásárlás", "💻 Tech & Vásárlás"),
+                ("Tartozás", "💸 Tartozás"),
+                ("Egyéb", "📦 Egyéb"),
+            ]
+            kategoria = kategoria_racs_valaszto(kiadas_opciok, "valasztott_ki_kat")
 
-        placeholder_szoveg = {
-            "Gyógyszertár": "Mit vettetek? (pl. Gyógyszer, Vitamin, Patika)",
-            "Tartozás": "Mire vonatkozik?",
-            "Előfizetés": "Melyik előfizetés? (pl. Netflix, Apple Music, Internet)",
-            "Dohánybolt": "Mit vettetek? (pl. Trafik, Üdítő)",
-            "Ajándékozás": "Kinek és mit? (pl. Szülinapi ajándék)",
-        }.get(kategoria, "Mit vettetek? (pl. Lidl, Kávézó)")
-        megnevezes = st.text_input(placeholder_szoveg)
-
-    osszeg = osszeg_mezo("Összeg (Ft)", key="uj_tetel_osszeg")
-    datum = st.date_input("Dátum", value=date.today())
-
-    if st.button("🍂 Rögzítés a felhőbe", use_container_width=True, type="primary"):
-        if tipus == "➕ Bevétel" and not ki:
-            hangeffekt("hiba")
-            st.warning("Add meg, kitől származik a bevétel!")
-        elif tipus == "➖ Kiadás" and kategoria == "Tartozás" and (not ki_tartozik or not kinek_tartozik):
-            hangeffekt("hiba")
-            st.warning("Írd be mindkét fél nevét a tartozásnál!")
-        elif not megnevezes or osszeg <= 0:
-            hangeffekt("hiba")
-            st.warning("Írd be a megnevezést és egy 0-nál nagyobb összeget!")
+    with col_uj_jobb:
+        if tipus == "➕ Bevétel":
+            ki = st.text_input("Kitől kaptuk / Ki tette bele?", placeholder="pl. Zsolt, Vivien, Szülők").strip()
+            megnevezes = st.text_input("Megnevezés (pl. Havi keret, Visszatérítés)")
         else:
-            vegleges_nev = f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if (tipus == "➖ Kiadás" and kategoria == "Tartozás") else megnevezes
-            with st.spinner("Mentés..."):
-                sheet.append_row([str(datum), ki, kategoria, vegleges_nev, int(osszeg)])
-            st.session_state["reset_uj_tetel"] = True
-            adatok_betoltese.clear()
-            hangeffekt("siker")
-            st.toast(f"Mentve: {vegleges_nev} ({fmt_ft(osszeg)} Ft)!", icon="🍂")
-            time.sleep(0.9)
-            st.rerun()
+            if kategoria == "Tartozás":
+                st.info("💸 **Tartozás rögzítése**")
+                c1, c2 = st.columns(2)
+                ki_tartozik = c1.text_input("Ki tartozik?", placeholder="pl. Zsolt").strip()
+                kinek_tartozik = c2.text_input("Kinek tartozik?", placeholder="pl. Vivien").strip()
+                ki = ki_tartozik
+            else:
+                ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
+
+            placeholder_szoveg = {
+                "Gyógyszertár": "Mit vettetek? (pl. Gyógyszer, Vitamin, Patika)",
+                "Tartozás": "Mire vonatkozik?",
+                "Előfizetés": "Melyik előfizetés? (pl. Netflix, Apple Music, Internet)",
+                "Dohánybolt": "Mit vettetek? (pl. Trafik, Üdítő)",
+                "Ajándékozás": "Kinek és mit? (pl. Szülinapi ajándék)",
+            }.get(kategoria, "Mit vettetek? (pl. Lidl, Kávézó)")
+            megnevezes = st.text_input(placeholder_szoveg)
+
+        osszeg = osszeg_mezo("Összeg (Ft)", key="uj_tetel_osszeg")
+        datum = st.date_input("Dátum", value=date.today())
+
+        if st.button("🍂 Rögzítés a felhőbe", use_container_width=True, type="primary"):
+            if tipus == "➕ Bevétel" and not ki:
+                hangeffekt("hiba")
+                st.warning("Add meg, kitől származik a bevétel!")
+            elif tipus == "➖ Kiadás" and kategoria == "Tartozás" and (not ki_tartozik or not kinek_tartozik):
+                hangeffekt("hiba")
+                st.warning("Írd be mindkét fél nevét a tartozásnál!")
+            elif not megnevezes or osszeg <= 0:
+                hangeffekt("hiba")
+                st.warning("Írd be a megnevezést és egy 0-nál nagyobb összeget!")
+            else:
+                vegleges_nev = f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if (tipus == "➖ Kiadás" and kategoria == "Tartozás") else megnevezes
+                with st.spinner("Mentés..."):
+                    sheet.append_row([str(datum), ki, kategoria, vegleges_nev, int(osszeg)])
+                st.session_state["reset_uj_tetel"] = True
+                adatok_betoltese.clear()
+                hangeffekt("siker")
+                st.toast(f"Mentve: {vegleges_nev} ({fmt_ft(osszeg)} Ft)!", icon="🍂")
+                time.sleep(0.9)
+                st.rerun()
 
 with tab_stat:
     if df.empty:
@@ -568,96 +693,212 @@ with tab_stat:
 
         if len(elerheto_honapok) > 1:
             opciok_map = {h: f"📅 {honap_cimke(h)}" for h in elerheto_honapok}
-            opciok_map["OSSZES"] = "♾️ Összesített (minden hónap)"
+            opciok_map["OSSZES"] = "♾️ Összesített"
             valasztott_idoszak = st.pills(
-                "Időszak kiválasztása",
+                "Időszak",
                 options=list(opciok_map.keys()),
                 format_func=lambda x: opciok_map[x],
                 default=elerheto_honapok[0],
                 key="stat_idoszak_valaszto",
+                label_visibility="collapsed",
             ) or elerheto_honapok[0]
             stat_df = df if valasztott_idoszak == "OSSZES" else df[df["Ev_Honap"] == valasztott_idoszak].copy()
-            if valasztott_idoszak != "OSSZES":
-                st.caption(f"🔎 Kiválasztott hónap: **{honap_cimke(valasztott_idoszak)}**")
+            idoszak_cim = honap_cimke(valasztott_idoszak) if valasztott_idoszak != "OSSZES" else "Minden hónap"
         else:
             stat_df = df.copy()
+            idoszak_cim = honap_cimke(elerheto_honapok[0]) if elerheto_honapok else "Aktuális"
 
         bevetelek = stat_df[stat_df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
         tartozasok = stat_df[stat_df["Kategória"] == "Tartozás"].copy()
         kiadasok = stat_df[(~stat_df["Kategória"].str.startswith("Bevétel:", na=False)) & (~stat_df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
 
-        ossz_bevetel = bevetelek["Összeg"].sum() if not bevetelek.empty else 0
-        ossz_kiadas = kiadasok["Összeg"].sum() if not kiadasok.empty else 0
+        ossz_bevetel = int(bevetelek["Összeg"].sum()) if not bevetelek.empty else 0
+        ossz_kiadas = int(kiadasok["Összeg"].sum()) if not kiadasok.empty else 0
         egyenleg = ossz_bevetel - ossz_kiadas
+        egyenleg_szin = "#34d399" if egyenleg >= 0 else "#fbbf24"
 
-        egyenleg_cimke = "💵 Havi egyenleg" if (len(elerheto_honapok) > 1 and valasztott_idoszak != "OSSZES") else "💵 Jelenleg felhasználható egyenleg"
-        st.metric(egyenleg_cimke, f"{fmt_ft(egyenleg)} Ft")
-        m1, m2 = st.columns(2)
-        m1.metric("➕ Bevétel", f"{fmt_ft(ossz_bevetel)} Ft")
-        m2.metric("➖ Kiadás", f"{fmt_ft(ossz_kiadas)} Ft")
+        # Kompakt összesítő kártya
+        st.markdown(
+            f"""<div class="stat-glass-card">
+                <div class="stat-card-header">
+                    <span>📌 Pénzügyi mérleg</span>
+                    <span style="color:#94a3b8; font-weight:500;">{idoszak_cim}</span>
+                </div>
+                <div class="stat-kpi-grid">
+                    <div class="stat-kpi-box">
+                        <div class="stat-kpi-lbl">💵 Egyenleg</div>
+                        <div class="stat-kpi-num" style="color:{egyenleg_szin};">{fmt_ft(egyenleg)} Ft</div>
+                    </div>
+                    <div class="stat-kpi-box">
+                        <div class="stat-kpi-lbl">➕ Bevétel</div>
+                        <div class="stat-kpi-num" style="color:#6ee7b7;">{fmt_ft(ossz_bevetel)} Ft</div>
+                    </div>
+                    <div class="stat-kpi-box">
+                        <div class="stat-kpi-lbl">➖ Kiadás</div>
+                        <div class="stat-kpi-num" style="color:#fcd34d;">{fmt_ft(ossz_kiadas)} Ft</div>
+                    </div>
+                </div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
 
-        if not bevetelek.empty:
-            st.divider()
-            st.subheader("📥 Bevételek forrása (mennyit adtatok bele)")
-            for _, sor in bevetelek.groupby("Ki", as_index=False)["Összeg"].sum().iterrows():
-                st.metric(f"{sor['Ki']}", f"{fmt_ft(sor['Összeg'])} Ft")
-            bevetelek["Típus"] = bevetelek["Kategória"].str.replace("Bevétel: ", "", regex=False)
-            fig_bev = px.pie(
-                bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(),
-                values="Összeg",
-                names="Típus",
-                hole=0.45,
-                title="Bevételek megoszlása",
-                color_discrete_sequence=["#f59e0b", "#10b981", "#d97706", "#0ea5e9"],
-            )
-            fig_bev.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
-            st.plotly_chart(fig_bev, use_container_width=True)
+        # Kompakt nézetválasztó a Statisztikán belül
+        stat_nezet = st.pills(
+            "Részletek",
+            ["📤 Kiadások", "📥 Bevételek", "💸 Tartozások"],
+            default="📤 Kiadások",
+            key="stat_al_nezet",
+            label_visibility="collapsed",
+        ) or "📤 Kiadások"
 
-        if not kiadasok.empty:
-            st.divider()
-            st.subheader("📤 Kiadások bontása és kategória arányok")
-            c1, c2 = st.columns(2)
-            c1.metric("Zsolt költötte", f"{fmt_ft(kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum())} Ft")
-            c2.metric("Vivien költötte", f"{fmt_ft(kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum())} Ft")
+        if stat_nezet == "📤 Kiadások":
+            if kiadasok.empty:
+                st.info("Ebben az időszakban nincs rögzített kiadás.")
+            else:
+                zsolt_ki = int(kiadasok[kiadasok["Ki"] == "Zsolt"]["Összeg"].sum())
+                vivien_ki = int(kiadasok[kiadasok["Ki"] == "Vivien"]["Összeg"].sum())
+                zsolt_pct = round(zsolt_ki / ossz_kiadas * 100, 1) if ossz_kiadas > 0 else 50.0
+                vivien_pct = round(100.0 - zsolt_pct, 1) if ossz_kiadas > 0 else 50.0
 
-            kat_osszesites = (
-                kiadasok.groupby("Kategória", as_index=False)
-                .agg(Összeg=("Összeg", "sum"), Darab=("Összeg", "count"))
-                .sort_values("Összeg", ascending=False)
-            )
-            kat_osszesites["Arány"] = (kat_osszesites["Összeg"] / ossz_kiadas * 100) if ossz_kiadas > 0 else 0.0
+                kat_osszesites = (
+                    kiadasok.groupby("Kategória", as_index=False)
+                    .agg(Összeg=("Összeg", "sum"), Darab=("Összeg", "count"))
+                    .sort_values("Összeg", ascending=False)
+                )
+                kat_osszesites["Arány"] = (kat_osszesites["Összeg"] / ossz_kiadas * 100) if ossz_kiadas > 0 else 0.0
 
-            fig_ki = px.pie(
-                kat_osszesites,
-                values="Összeg",
-                names="Kategória",
-                hole=0.45,
-                title="Kiadások megoszlása",
-                color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6", "#a855f7", "#14b8a6", "#ec4899"],
-            )
-            fig_ki.update_traces(textposition="inside", textinfo="percent+label")
-            fig_ki.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f8fafc")
-            st.plotly_chart(fig_ki, use_container_width=True)
+                # PC-n 2 hasábos elrendezés, mobilon egymás alatt kompakt módon
+                col_s_bal, col_s_jobb = st.columns([1.05, 1.15], gap="medium")
 
-            st.markdown("#### 📊 Kategóriák pontos aránya")
-            for _, k_sor in kat_osszesites.iterrows():
-                arany_szazalek = float(k_sor["Arány"])
-                arany_szoveg = f"{arany_szazalek:.1f}".replace(".", ",")
+                with col_s_bal:
+                    st.markdown(
+                        f"""<div class="stat-glass-card">
+                            <div class="stat-card-header"><span>👥 Ki mennyit fizetett</span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.86rem;">
+                                <span>🟡 <b>Zsolt:</b> {fmt_ft(zsolt_ki)} Ft ({str(zsolt_pct).replace('.', ',')}%)</span>
+                                <span>🟢 <b>Vivien:</b> {fmt_ft(vivien_ki)} Ft ({str(vivien_pct).replace('.', ',')}%)</span>
+                            </div>
+                            <div class="split-bar-wrap">
+                                <div class="split-bar-zsolt" style="width:{zsolt_pct}%;"></div>
+                                <div class="split-bar-vivien" style="width:{vivien_pct}%;"></div>
+                            </div>
+                        </div>""",
+                        unsafe_allow_html=True,
+                    )
+
+                    fig_ki = px.pie(
+                        kat_osszesites,
+                        values="Összeg",
+                        names="Kategória",
+                        hole=0.58,
+                        color_discrete_sequence=["#f59e0b", "#10b981", "#ea580c", "#0d9488", "#eab308", "#e11d48", "#3b82f6", "#a855f7", "#14b8a6", "#ec4899"],
+                    )
+                    fig_ki.update_traces(textposition="inside", textinfo="percent", insidetextorientation="horizontal")
+                    fig_ki.update_layout(
+                        height=235,
+                        margin=dict(t=8, b=8, l=4, r=4),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        font_color="#f8fafc",
+                        showlegend=True,
+                        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.02, font=dict(size=11)),
+                    )
+                    st.plotly_chart(fig_ki, use_container_width=True, config={"displayModeBar": False})
+
+                with col_s_jobb:
+                    sorok_html = ""
+                    for _, k_sor in kat_osszesites.iterrows():
+                        arany_szazalek = float(k_sor["Arány"])
+                        arany_szoveg = f"{arany_szazalek:.1f}".replace(".", ",")
+                        sorok_html += f"""
+                        <div class="compact-cat-row">
+                            <div class="compact-cat-top">
+                                <div><b>{k_sor['Kategória']}</b> <span class="kat-arany-szazalek">{arany_szoveg}%</span></div>
+                                <div style="color:#e2e8f0;"><b>{fmt_ft(k_sor['Összeg'])} Ft</b> <span style="color:#94a3b8; font-size:0.76rem;">({int(k_sor['Darab'])} db)</span></div>
+                            </div>
+                            <div class="compact-cat-bar-bg">
+                                <div class="compact-cat-bar-fill" style="width:{min(100.0, arany_szazalek):.1f}%;"></div>
+                            </div>
+                        </div>"""
+
+                    st.markdown(
+                        f"""<div class="stat-glass-card">
+                            <div class="stat-card-header">
+                                <span>📊 Kategóriák aránya</span>
+                                <span style="color:#94a3b8; font-weight:500;">{len(kat_osszesites)} kategória</span>
+                            </div>
+                            {sorok_html}
+                        </div>""",
+                        unsafe_allow_html=True,
+                    )
+
+        elif stat_nezet == "📥 Bevételek":
+            if bevetelek.empty:
+                st.info("Ebben az időszakban nincs rögzített bevétel.")
+            else:
+                col_b1, col_b2 = st.columns(2, gap="medium")
+                with col_b1:
+                    bev_forras_html = ""
+                    for _, sor in bevetelek.groupby("Ki", as_index=False)["Összeg"].sum().sort_values("Összeg", ascending=False).iterrows():
+                        pct = (sor["Összeg"] / ossz_bevetel * 100) if ossz_bevetel > 0 else 0.0
+                        bev_forras_html += f"""
+                        <div class="compact-cat-row">
+                            <div class="compact-cat-top">
+                                <div><b>👤 {sor['Ki']}</b> <span class="kat-arany-szazalek">{pct:.1f}%</span></div>
+                                <div style="color:#6ee7b7;"><b>{fmt_ft(sor['Összeg'])} Ft</b></div>
+                            </div>
+                            <div class="compact-cat-bar-bg">
+                                <div class="compact-cat-bar-fill" style="width:{min(100.0, pct):.1f}%;"></div>
+                            </div>
+                        </div>"""
+                    st.markdown(
+                        f"""<div class="stat-glass-card">
+                            <div class="stat-card-header"><span>💰 Befizetők aránya</span></div>
+                            {bev_forras_html}
+                        </div>""",
+                        unsafe_allow_html=True,
+                    )
+                with col_b2:
+                    bevetelek["Típus"] = bevetelek["Kategória"].str.replace("Bevétel: ", "", regex=False)
+                    fig_bev = px.pie(
+                        bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(),
+                        values="Összeg",
+                        names="Típus",
+                        hole=0.58,
+                        color_discrete_sequence=["#10b981", "#f59e0b", "#0ea5e9", "#d97706"],
+                    )
+                    fig_bev.update_traces(textposition="inside", textinfo="percent")
+                    fig_bev.update_layout(
+                        height=220,
+                        margin=dict(t=8, b=8, l=4, r=4),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        font_color="#f8fafc",
+                        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.02, font=dict(size=11)),
+                    )
+                    st.plotly_chart(fig_bev, use_container_width=True, config={"displayModeBar": False})
+
+        elif stat_nezet == "💸 Tartozások":
+            if tartozasok.empty:
+                st.info("Ebben az időszakban nincs rögzített tartozás.")
+            else:
+                tartozasok["Irány"] = tartozasok["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok["Ki"])
+                tart_html = ""
+                for _, sor in tartozasok.groupby("Irány", as_index=False)["Összeg"].sum().iterrows():
+                    tart_html += f"""
+                    <div class="compact-cat-row">
+                        <div class="compact-cat-top">
+                            <b>💸 {sor['Irány']}</b>
+                            <b style="color:#fda4af;">{fmt_ft(sor['Összeg'])} Ft</b>
+                        </div>
+                    </div>"""
                 st.markdown(
-                    f"""<div class="kat-arany-sor">
-                        <div><b>{k_sor['Kategória']}</b> <span class="kat-arany-szazalek">{arany_szoveg}%</span></div>
-                        <div style="color:#cbd5e1; font-size:0.86rem;"><b>{fmt_ft(k_sor['Összeg'])} Ft</b> <span style="color:#94a3b8;">({int(k_sor['Darab'])} tétel)</span></div>
+                    f"""<div class="stat-glass-card">
+                        <div class="stat-card-header"><span>💸 Tartozások összesítője</span></div>
+                        {tart_html}
                     </div>""",
                     unsafe_allow_html=True,
                 )
-                st.progress(min(1.0, max(0.0, arany_szazalek / 100.0)))
-
-        if not tartozasok.empty:
-            st.divider()
-            st.subheader("💸 Rögzített tartozások")
-            tartozasok["Irány"] = tartozasok["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok["Ki"])
-            for _, sor in tartozasok.groupby("Irány", as_index=False)["Összeg"].sum().iterrows():
-                st.metric(sor["Irány"], f"{fmt_ft(sor['Összeg'])} Ft")
 
 with tab_hitel:
     st.subheader("🏦 Hitel és törlesztés követő")
