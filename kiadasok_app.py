@@ -56,7 +56,122 @@ st.markdown(
         50% { opacity: 1; }
         100% { background-position: 45px 0px, -35px 0px, 25px 0px, -20px 0px; opacity: 0.75; }
     }
-    [data-testid="stHeader"] { background: transparent !important; }
+
+    /* Streamlit alap felső sáv letisztítása és kompakt térköz */
+    [data-testid="stHeader"] {
+        background: transparent !important;
+        height: 0.5rem !important;
+    }
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
+    .block-container {
+        padding-top: 1.1rem !important;
+        padding-bottom: 2.5rem !important;
+    }
+
+    /* Modern üveghatású felső fejléc kártya */
+    .top-nav-hero {
+        background: linear-gradient(135deg, rgba(16, 28, 25, 0.86) 0%, rgba(24, 20, 15, 0.84) 100%);
+        border: 1px solid rgba(251, 191, 36, 0.28);
+        border-radius: 20px;
+        padding: 14px 18px;
+        margin-bottom: 14px;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .top-nav-title {
+        font-size: 1.28rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .top-nav-sub {
+        font-size: 0.78rem;
+        color: #cbd5e1;
+        margin-top: 2px;
+    }
+    .top-nav-badge {
+        background: rgba(16, 185, 129, 0.16);
+        border: 1px solid rgba(52, 211, 153, 0.42);
+        border-radius: 999px;
+        padding: 7px 14px;
+        text-align: right;
+        box-shadow: 0 0 16px rgba(16, 185, 129, 0.16);
+    }
+    .top-nav-badge-neg {
+        background: rgba(245, 158, 11, 0.16);
+        border: 1px solid rgba(251, 191, 36, 0.45);
+        border-radius: 999px;
+        padding: 7px 14px;
+        text-align: right;
+    }
+    .top-nav-badge-label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        display: block;
+    }
+    .top-nav-badge-val {
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: #6ee7b7;
+    }
+    .top-nav-badge-neg .top-nav-badge-val {
+        color: #fcd34d;
+    }
+
+    /* Modern, kapszulás, 4 egyenlő oszlopos fülsáv */
+    [data-testid="stTabs"] [role="tablist"] {
+        background: rgba(11, 19, 17, 0.78) !important;
+        border: 1px solid rgba(251, 191, 36, 0.22) !important;
+        border-radius: 16px !important;
+        padding: 5px !important;
+        gap: 5px !important;
+        backdrop-filter: blur(14px) !important;
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
+    }
+    [data-testid="stTabs"] [role="tab"] {
+        border-radius: 12px !important;
+        padding: 9px 4px !important;
+        margin: 0 !important;
+        justify-content: center !important;
+        color: #cbd5e1 !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+    }
+    [data-testid="stTabs"] [role="tab"] p {
+        font-size: 0.84rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+    }
+    [data-testid="stTabs"] [role="tab"]:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #ffffff !important;
+    }
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.42), rgba(5, 150, 105, 0.42)) !important;
+        border: 1px solid rgba(251, 191, 36, 0.58) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.24) !important;
+    }
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"],
+    [data-testid="stTabs"] [data-baseweb="tab-border"] {
+        display: none !important;
+    }
 
     button, input, [data-testid="stMetric"], [data-baseweb="tab"] {
         transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
@@ -190,8 +305,6 @@ def honap_cimke(ym_str):
     except Exception:
         return ym_str
 
-st.title("🍂 Közös pénzügyek ✨")
-
 @st.cache_resource
 def csatlakozas_sheetshez():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -220,6 +333,32 @@ def adatok_betoltese():
     return df
 
 df = adatok_betoltese()
+
+# Élő egyenleg kiszámítása a modern felső sávhoz
+if not df.empty:
+    _bev = df[df["Kategória"].str.startswith("Bevétel:", na=False)]["Összeg"].sum()
+    _ki = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))]["Összeg"].sum()
+    aktualis_egyenleg = int(_bev - _ki)
+else:
+    aktualis_egyenleg = 0
+
+ma_fejlec = date.today()
+badge_osztaly = "top-nav-badge" if aktualis_egyenleg >= 0 else "top-nav-badge-neg"
+
+st.markdown(
+    f"""<div class="top-nav-hero">
+        <div>
+            <div class="top-nav-title">🍂 Közös pénzügyek</div>
+            <div class="top-nav-sub">Zsolt &amp; Vivien • {ma_fejlec.year}. {HONAP_NEVEK[ma_fejlec.month - 1]} {ma_fejlec.day}.</div>
+        </div>
+        <div class="{badge_osztaly}">
+            <span class="top-nav-badge-label">Kassza egyenleg</span>
+            <span class="top-nav-badge-val">{fmt_ft(aktualis_egyenleg)} Ft</span>
+        </div>
+    </div>""",
+    unsafe_allow_html=True,
+)
+
 tab_uj, tab_stat, tab_hitel, tab_lista = st.tabs(["🍁 Új tétel", "📊 Statisztika", "🏦 Hitel", "📜 Előzmények"])
 
 with tab_uj:
@@ -285,7 +424,6 @@ with tab_stat:
     if df.empty:
         st.info("Még nincs rögzített tétel.")
     else:
-        # Hónapok szűrése: csak akkor jelenik meg a havi bontó, ha már több mint 1 hónap van
         nem_hitel_df = df[~df["Kategória"].isin(["Hitel: Keret", "Hitel: Törlesztés"])]
         elerheto_honapok = sorted([h for h in nem_hitel_df["Ev_Honap"].unique() if h != "Ismeretlen"], reverse=True)
 
@@ -547,7 +685,6 @@ with tab_lista:
 
         st.divider()
 
-        # Látványos, kártyás, gyors törlés keresővel és azonnali megerősítéssel
         st.subheader("🗑️ Tételek kezelése és törlése")
         kereso = st.text_input("🔍 Gyorskereső (név, kategória vagy dátum)", placeholder="pl. Lidl, Zsolt, Hitel...", key="torles_kereso").strip().lower()
         forditott = df.iloc[::-1]
