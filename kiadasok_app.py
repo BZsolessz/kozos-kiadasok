@@ -1,5 +1,6 @@
+import re
 import time
-from datetime import date, datetime
+from datetime import date, timedelta
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
@@ -123,6 +124,24 @@ def hangeffekt(tipus="siker"):
         height=0,
     )
 
+def fmt_ft(ertek):
+    return f"{int(ertek):,}".replace(",", ".")
+
+def osszeg_mezo(cimke, key, alap_ertek=0):
+    if key not in st.session_state:
+        st.session_state[key] = fmt_ft(alap_ertek) if alap_ertek > 0 else ""
+
+    def formaz():
+        szamjegyek = re.sub(r"\D", "", st.session_state[key])
+        st.session_state[key] = fmt_ft(int(szamjegyek)) if szamjegyek else ""
+
+    nyers = st.text_input(cimke, key=key, placeholder="pl. 15.000", on_change=formaz)
+    szamjegyek = re.sub(r"\D", "", nyers)
+    ertek = int(szamjegyek) if szamjegyek else 0
+    if ertek > 0:
+        st.caption(f"💰 Rögzítendő összeg: **{fmt_ft(ertek)} Ft**")
+    return ertek
+
 st.title("🍂 Közös pénzügyek ✨")
 
 @st.cache_resource
@@ -179,7 +198,7 @@ with tab_uj:
             ki = ki_tartozik
         else:
             ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
-        
+
         placeholder_szoveg = {
             "Tartozás": "Mire vonatkozik?",
             "Előfizetés": "Melyik előfizetés? (pl. Netflix, Apple Music, Internet)",
@@ -188,7 +207,7 @@ with tab_uj:
         }.get(kategoria, "Mit vettetek? (pl. Lidl, Kávézó)")
         megnevezes = st.text_input(placeholder_szoveg)
 
-    osszeg = st.number_input("Összeg (Ft)", min_value=0, step=500)
+    osszeg = osszeg_mezo("Összeg (Ft)", key="uj_tetel_osszeg")
     datum = st.date_input("Dátum", value=date.today())
 
     if st.button("🍂 Rögzítés a felhőbe", use_container_width=True, type="primary"):
@@ -205,9 +224,10 @@ with tab_uj:
             vegleges_nev = f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if (tipus == "➖ Kiadás" and kategoria == "Tartozás") else megnevezes
             with st.spinner("Mentés..."):
                 sheet.append_row([str(datum), ki, kategoria, vegleges_nev, int(osszeg)])
+            st.session_state["uj_tetel_osszeg"] = ""
             adatok_betoltese.clear()
             hangeffekt("siker")
-            st.toast(f"Mentve: {vegleges_nev}!", icon="🍂")
+            st.toast(f"Mentve: {vegleges_nev} ({fmt_ft(osszeg)} Ft)!", icon="🍂")
             time.sleep(0.9)
             st.rerun()
 
@@ -223,16 +243,16 @@ with tab_stat:
         ossz_kiadas = kiadasok["Összeg"].sum() if not kiadasok.empty else 0
         egyenleg = ossz_bevetel - ossz_kiadas
 
-        st.metric("💵 Jelenleg felhasználható egyenleg", f"{egyenleg:,.0f} Ft".replace(",", " "))
+        st.metric("💵 Jelenleg felhasználható egyenleg", f"{fmt_ft(egyenleg)} Ft")
         m1, m2 = st.columns(2)
-        m1.metric("➕ Összes bevétel", f"{ossz_bevetel:,.0f} Ft".replace(",", " "))
-        m2.metric("➖ Összes kiadás", f"{ossz_kiadas:,.0f} Ft".replace(",", " "))
+        m1.metric("➕ Összes bevétel", f"{fmt_ft(ossz_bevetel)} Ft")
+        m2.metric("➖ Összes kiadás", f"{fmt_ft(ossz_kiadas)} Ft")
 
         if not bevetelek.empty:
             st.divider()
             st.subheader("📥 Bevételek forrása (mennyit adtatok bele)")
             for _, sor in bevetelek.groupby("Ki", as_index=False)["Összeg"].sum().iterrows():
-                st.metric(f"{sor['Ki']}", f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
+                st.metric(f"{sor['Ki']}", f"{fmt_ft(sor['Összeg'])} Ft")
             bevetelek["Típus"] = bevetelek["Kategória"].str.replace("Bevétel: ", "", regex=False)
             fig_bev = px.pie(
                 bevetelek.groupby("Típus", as_index=False)["Összeg"].sum(),
@@ -249,8 +269,8 @@ with tab_stat:
             st.divider()
             st.subheader("📤 Kiadások bontása")
             c1, c2 = st.columns(2)
-            c1.metric("Zsolt költötte", f"{kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum():,.0f} Ft".replace(",", " "))
-            c2.metric("Vivien költötte", f"{kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum():,.0f} Ft".replace(",", " "))
+            c1.metric("Zsolt költötte", f"{fmt_ft(kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum())} Ft")
+            c2.metric("Vivien költötte", f"{fmt_ft(kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum())} Ft")
             fig_ki = px.pie(
                 kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum(),
                 values="Összeg",
@@ -267,7 +287,7 @@ with tab_stat:
             st.subheader("💸 Rögzített tartozások")
             tartozasok["Irány"] = tartozasok["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok["Ki"])
             for _, sor in tartozasok.groupby("Irány", as_index=False)["Összeg"].sum().iterrows():
-                st.metric(sor["Irány"], f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
+                st.metric(sor["Irány"], f"{fmt_ft(sor['Összeg'])} Ft")
 
 with tab_hitel:
     st.subheader("🏦 Hitel és törlesztés követő")
@@ -281,11 +301,11 @@ with tab_hitel:
         akt_honap = date.today().strftime("%Y-%m")
 
         for _, h_sor in hitel_keretek.iterrows():
-            # Formátum: "Hitel neve | havi:25000 | kezdet:2025-06-15"
             reszek = [r.strip() for r in str(h_sor["Megnevezés"]).split("|")]
             h_nev = reszek[0]
             havi_torleszto = 0
             kezdo_datum_str = str(h_sor["Dátum"])
+            vege_datum_str = ""
             for r in reszek[1:]:
                 if r.startswith("havi:"):
                     try:
@@ -294,6 +314,8 @@ with tab_hitel:
                         havi_torleszto = 0
                 elif r.startswith("kezdet:"):
                     kezdo_datum_str = r.replace("kezdet:", "").strip()
+                elif r.startswith("vege:"):
+                    vege_datum_str = r.replace("vege:", "").strip()
 
             teljes_osszeg = int(h_sor["Összeg"])
             kapcsolodo_befizetesek = hitel_torlesztesek[hitel_torlesztesek["Megnevezés"].str.startswith(h_nev, na=False)]
@@ -303,21 +325,33 @@ with tab_hitel:
             szazalek = min(1.0, eddig_kifizetve / teljes_osszeg) if teljes_osszeg > 0 else 0.0
 
             st.markdown(f"### 📌 {h_nev}")
-            st.caption(f"🗓️ Hitel kezdete: **{kezdo_datum_str}**")
-            st.progress(szazalek, text=f"Kifizetve: {szazalek*100:.1f}% ({eddig_kifizetve:,.0f} Ft / {teljes_osszeg:,.0f} Ft)".replace(",", " "))
+            idosav_szoveg = f"🗓️ Kezdet: **{kezdo_datum_str}**"
+            if vege_datum_str:
+                idosav_szoveg += f"  |  🏁 Vége (lejárat): **{vege_datum_str}**"
+            st.caption(idosav_szoveg)
+            st.progress(szazalek, text=f"Kifizetve: {szazalek*100:.1f}% ({fmt_ft(eddig_kifizetve)} Ft / {fmt_ft(teljes_osszeg)} Ft)")
 
             hc1, hc2 = st.columns(2)
-            hc1.metric("Jelenlegi tartozás", f"{hatralevo:,.0f} Ft".replace(",", " "))
-            hc2.metric("Ebben a hónapban levonva", f"{e_havi_levonas:,.0f} Ft".replace(",", " "))
+            hc1.metric("Jelenlegi tartozás", f"{fmt_ft(hatralevo)} Ft")
+            hc2.metric("Ebben a hónapban levonva", f"{fmt_ft(e_havi_levonas)} Ft")
 
             if hatralevo == 0:
                 st.success("🎉 Ez a hitel teljesen ki van fizetve!")
-            elif havi_torleszto > 0:
-                hatralevo_honapok = -(-hatralevo // havi_torleszto)
+            else:
                 ma = date.today()
-                cel_ev = ma.year + (ma.month - 1 + hatralevo_honapok) // 12
-                cel_honap = (ma.month - 1 + hatralevo_honapok) % 12 + 1
-                st.info(f"⏳ Havi **{havi_torleszto:,.0f} Ft**-os törlesztővel még **{hatralevo_honapok} hónap** van hátra → Várható lejárat: **{cel_ev}. {honap_nevek[cel_honap - 1]}**".replace(",", " "))
+                if vege_datum_str:
+                    try:
+                        vege_dt = date.fromisoformat(vege_datum_str)
+                        hatralevo_honapok = max(1, (vege_dt.year - ma.year) * 12 + (vege_dt.month - ma.month))
+                        szukseges_havi = havi_torleszto if havi_torleszto > 0 else -(-hatralevo // hatralevo_honapok)
+                        st.info(f"⏳ A megadott lejáratig (**{vege_datum_str}**) még **{hatralevo_honapok} hónap** van hátra (havi **{fmt_ft(szukseges_havi)} Ft**).")
+                    except ValueError:
+                        pass
+                elif havi_torleszto > 0:
+                    hatralevo_honapok = -(-hatralevo // havi_torleszto)
+                    cel_ev = ma.year + (ma.month - 1 + hatralevo_honapok) // 12
+                    cel_honap = (ma.month - 1 + hatralevo_honapok) % 12 + 1
+                    st.info(f"⏳ Havi **{fmt_ft(havi_torleszto)} Ft**-os törlesztővel még **{hatralevo_honapok} hónap** van hátra → Várható lejárat: **{cel_ev}. {honap_nevek[cel_honap - 1]}**")
             st.divider()
 
         with st.expander("💸 Havi levonás / törlesztés rögzítése", expanded=True):
@@ -330,7 +364,11 @@ with tab_hitel:
                         alap_torleszto = int(str(h_sor["Megnevezés"]).split("havi:")[1].split("|")[0].strip())
                     except ValueError:
                         alap_torleszto = 0
-            levont_osszeg = st.number_input("Levont összeg (Ft)", min_value=0, value=alap_torleszto, step=500, key="hitel_levonas_osszeg")
+            if st.session_state.get("utolso_valasztott_hitel") != valasztott_hitel:
+                st.session_state["utolso_valasztott_hitel"] = valasztott_hitel
+                st.session_state["hitel_levonas_osszeg"] = fmt_ft(alap_torleszto) if alap_torleszto > 0 else ""
+
+            levont_osszeg = osszeg_mezo("Levont összeg (Ft)", key="hitel_levonas_osszeg", alap_ertek=alap_torleszto)
             levonas_datum = st.date_input("Levonás dátuma", value=date.today(), key="hitel_levonas_datum")
 
             if st.button("✅ Levonás rögzítése", use_container_width=True, type="primary"):
@@ -342,16 +380,18 @@ with tab_hitel:
                         sheet.append_row([str(levonas_datum), "Zsolt", "Hitel: Törlesztés", f"{valasztott_hitel} – törlesztés", int(levont_osszeg)])
                     adatok_betoltese.clear()
                     hangeffekt("siker")
-                    st.toast("Havi levonás rögzítve!", icon="🏦")
+                    st.toast(f"Levonás rögzítve ({fmt_ft(levont_osszeg)} Ft)!", icon="🏦")
                     time.sleep(0.9)
                     st.rerun()
 
     with st.expander("⚙️ Új hitel beállítása"):
         uj_hitel_nev = st.text_input("Hitel neve (pl. Telefon részlet, Személyi kölcsön)").strip()
-        uj_hitel_kezdet = st.date_input("Mikor kezdődött a hitel?", value=date.today(), key="uj_hitel_kezdet")
-        uj_hitel_teljes = st.number_input("Teljes visszafizetendő összeg eredetileg (Ft)", min_value=0, step=5000, key="uj_hitel_teljes")
-        uj_hitel_jelenlegi = st.number_input("Jelenleg mennyi a tartozás még (Ft)", min_value=0, step=5000, key="uj_hitel_jelenlegi")
-        uj_hitel_havi = st.number_input("Havi törlesztőrészlet (Ft)", min_value=0, step=1000, key="uj_hitel_havi")
+        d_col1, d_col2 = st.columns(2)
+        uj_hitel_kezdet = d_col1.date_input("Mikor kezdődött?", value=date.today(), key="uj_hitel_kezdet")
+        uj_hitel_vege = d_col2.date_input("Mikor jár le (hitel vége)?", value=date.today() + timedelta(days=365), key="uj_hitel_vege")
+        uj_hitel_teljes = osszeg_mezo("Teljes visszafizetendő összeg eredetileg (Ft)", key="uj_hitel_teljes")
+        uj_hitel_jelenlegi = osszeg_mezo("Jelenleg mennyi a tartozás még (Ft)", key="uj_hitel_jelenlegi")
+        uj_hitel_havi = osszeg_mezo("Havi törlesztőrészlet (Ft – opcionális)", key="uj_hitel_havi")
         if st.button("💾 Hitel mentése", use_container_width=True):
             if not uj_hitel_nev or uj_hitel_teljes <= 0:
                 hangeffekt("hiba")
@@ -361,10 +401,13 @@ with tab_hitel:
                 st.warning("A jelenlegi tartozás nem lehet nagyobb, mint a teljes hitelösszeg!")
             else:
                 with st.spinner("Mentés..."):
-                    sheet.append_row([str(uj_hitel_kezdet), "Zsolt", "Hitel: Keret", f"{uj_hitel_nev} | havi:{int(uj_hitel_havi)} | kezdet:{uj_hitel_kezdet}", int(uj_hitel_teljes)])
+                    meta = f"{uj_hitel_nev} | havi:{int(uj_hitel_havi)} | kezdet:{uj_hitel_kezdet} | vege:{uj_hitel_vege}"
+                    sheet.append_row([str(uj_hitel_kezdet), "Zsolt", "Hitel: Keret", meta, int(uj_hitel_teljes)])
                     mar_kifizetett = uj_hitel_teljes - uj_hitel_jelenlegi
                     if mar_kifizetett > 0:
                         sheet.append_row([str(uj_hitel_kezdet), "Zsolt", "Hitel: Törlesztés", f"{uj_hitel_nev} – korábbi törlesztések", int(mar_kifizetett)])
+                for k in ["uj_hitel_teljes", "uj_hitel_jelenlegi", "uj_hitel_havi"]:
+                    st.session_state[k] = ""
                 adatok_betoltese.clear()
                 hangeffekt("siker")
                 st.toast(f"Hitel létrehozva: {uj_hitel_nev}!", icon="🏦")
@@ -375,7 +418,9 @@ with tab_lista:
     if df.empty:
         st.info("Üres a lista.")
     else:
-        st.dataframe(df.iloc[::-1].drop(columns=["Sheet_Row"]), use_container_width=True, hide_index=True)
+        megjelenites_df = df.iloc[::-1].drop(columns=["Sheet_Row"]).copy()
+        megjelenites_df["Összeg"] = megjelenites_df["Összeg"].apply(lambda x: f"{fmt_ft(x)} Ft")
+        st.dataframe(megjelenites_df, use_container_width=True, hide_index=True)
         if st.button("🔄 Frissítés a felhőből", use_container_width=True):
             adatok_betoltese.clear()
             hangeffekt("frissites")
@@ -385,7 +430,7 @@ with tab_lista:
         st.divider()
         with st.expander("🗑️ Tétel törlése"):
             forditott = df.iloc[::-1]
-            opciok = {r["Sheet_Row"]: f"{r['Dátum']} | {r['Ki']} – {r['Megnevezés']} ({r['Összeg']:,} Ft)".replace(",", " ") for _, r in forditott.iterrows()}
+            opciok = {r["Sheet_Row"]: f"{r['Dátum']} | {r['Ki']} – {r['Megnevezés']} ({fmt_ft(r['Összeg'])} Ft)" for _, r in forditott.iterrows()}
             valasztott = st.selectbox("Törlendő tétel:", options=list(opciok.keys()), format_func=lambda x: opciok[x])
             if st.button("🗑️ Kiválasztott tétel végleges törlése", type="primary", use_container_width=True):
                 with st.spinner("Törlés..."):
