@@ -7,92 +7,51 @@ import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Mobilbarát oldalbeállítás
 st.set_page_config(page_title="Közös Kiadások", page_icon="💑", layout="centered")
 
-# Lehúzós oldalfrissítés (Pull-to-Refresh) tiltása mobilon
 st.markdown(
-    """
-    <style>
-    html, body, [data-testid="stAppViewContainer"], .main {
-        overscroll-behavior-y: contain !important;
-        overscroll-behavior: none !important;
-    }
-    </style>
-    """,
+    """<style>html, body, [data-testid="stAppViewContainer"], .main {
+    overscroll-behavior-y: contain !important; overscroll-behavior: none !important;
+    }</style>""",
     unsafe_allow_html=True,
 )
 
-# Letisztult hangeffektek minden művelethez (külső fájl nélkül)
 def hangeffekt(tipus="siker"):
     components.html(
-        f"""
-        <script>
-        try {{
+        f"""<script>try {{
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const now = ctx.currentTime;
-            const tipus = "{tipus}";
-
-            function playTone(freq, start, duration, type = 'sine', vol = 0.22) {{
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, start);
-                gain.gain.setValueAtTime(vol, start);
-                gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(start);
-                osc.stop(start + duration);
+            const now = ctx.currentTime, t = "{tipus}";
+            function p(f, s, d, y='sine', v=0.22) {{
+                const o = ctx.createOscillator(), g = ctx.createGain();
+                o.type = y; o.frequency.setValueAtTime(f, s);
+                g.gain.setValueAtTime(v, s); g.gain.exponentialRampToValueAtTime(0.001, s + d);
+                o.connect(g); g.connect(ctx.destination); o.start(s); o.stop(s + d);
             }}
-
-            if (tipus === "siker") {{
-                playTone(523.25, now, 0.35, 'sine', 0.25);
-                playTone(783.99, now + 0.12, 0.55, 'sine', 0.25);
-            }} else if (tipus === "torles") {{
-                playTone(329.63, now, 0.25, 'sine', 0.22);
-                playTone(220.00, now + 0.14, 0.40, 'sine', 0.22);
-            }} else if (tipus === "frissites") {{
-                playTone(880.00, now, 0.18, 'sine', 0.18);
-            }} else if (tipus === "hiba") {{
-                playTone(174.61, now, 0.16, 'triangle', 0.22);
-                playTone(174.61, now + 0.18, 0.22, 'triangle', 0.22);
-            }}
-        }} catch (e) {{}}
-        </script>
-        """,
+            if (t==="siker") {{ p(523.25, now, 0.35, 'sine', 0.25); p(783.99, now+0.12, 0.55, 'sine', 0.25); }}
+            else if (t==="torles") {{ p(329.63, now, 0.25); p(220.00, now+0.14, 0.40); }}
+            else if (t==="frissites") {{ p(880.00, now, 0.18, 'sine', 0.18); }}
+            else if (t==="hiba") {{ p(174.61, now, 0.16, 'triangle'); p(174.61, now+0.18, 0.22, 'triangle'); }}
+        }} catch (e) {{}}</script>""",
         height=0,
     )
 
 st.title("💑 Közös Kiadáskövető")
 
-# --- CSATLAKOZÁS A GOOGLE TÁBLÁZATHOZ ---
 @st.cache_resource
 def csatlakozas_sheetshez():
-    hatokorok = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive",
-    ]
+    scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     try:
-        if "gcp_service_account" in st.secrets:
-            creds = Credentials.from_service_account_info(
-                st.secrets["gcp_service_account"], scopes=hatokorok
-            )
-        else:
-            creds = Credentials.from_service_account_file("kulcs.json", scopes=hatokorok)
+        creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scopes)
     except Exception:
-        creds = Credentials.from_service_account_file("kulcs.json", scopes=hatokorok)
-    
-    client = gspread.authorize(creds)
-    return client.open("Kozos_Kiadasok").sheet1
+        creds = Credentials.from_service_account_file("kulcs.json", scopes=scopes)
+    return gspread.authorize(creds).open("Kozos_Kiadasok").sheet1
 
 try:
     sheet = csatlakozas_sheetshez()
 except Exception as e:
-    st.error(f"Nem sikerült csatlakozni a Google Táblázathoz! Ellenőrizd a Secrets beállítást és a megosztást.\nRészletek: {e}")
+    st.error(f"Csatlakozási hiba: {e}")
     st.stop()
 
-# Adatok beolvasása a táblázatból (pontos Google Sheets sorszámmal együtt)
 def adatok_betoltese():
     rekordok = sheet.get_all_records()
     if not rekordok:
@@ -103,142 +62,87 @@ def adatok_betoltese():
     return df
 
 df = adatok_betoltese()
-
-# --- 3 FÜL A TELEFONOS KÉNYELEMÉRT ---
 tab_uj, tab_stat, tab_lista = st.tabs(["➕ Új tétel", "📊 Statisztika", "📝 Előzmények"])
 
-# 1. FÜL: ÚJ KIADÁS VAGY TARTOZÁS RÖGZÍTÉSE
 with tab_uj:
     kategoria = st.selectbox(
         "Kategória",
-        [
-            "Élelmiszer & Háztartás",
-            "Üzemanyag & Autó",
-            "Lakhatás & Rezsi",
-            "Étterem & Randi",
-            "Tech & Vásárlás",
-            "Tartozás",
-            "Egyéb",
-        ],
-        key="kategoria_valaszto",
+        ["Élelmiszer & Háztartás", "Üzemanyag & Autó", "Lakhatás & Rezsi", "Étterem & Randi", "Tech & Vásárlás", "Tartozás", "Egyéb"],
     )
-
     if kategoria == "Tartozás":
         st.info("💸 **Tartozás rögzítése**")
-        t_col1, t_col2 = st.columns(2)
-        with t_col1:
-            ki_tartozik = st.text_input("Ki tartozik?", placeholder="pl. Zsolt", key="ki_tartozik_input").strip()
-        with t_col2:
-            kinek_tartozik = st.text_input("Kinek tartozik?", placeholder="pl. Vivien", key="kinek_tartozik_input").strip()
+        c1, c2 = st.columns(2)
+        ki_tartozik = c1.text_input("Ki tartozik?", placeholder="pl. Zsolt").strip()
+        kinek_tartozik = c2.text_input("Kinek tartozik?", placeholder="pl. Vivien").strip()
         ki = ki_tartozik
     else:
-        ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True, key="ki_valaszto")
+        ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True)
 
-    megnevezes = st.text_input(
-        "Mire vonatkozik? (pl. Mozijegy, Kölcsön)" if kategoria == "Tartozás" else "Mit vettetek? (pl. Lidl, Tankolás)",
-        key="megnevezes_input",
-    )
-    osszeg = st.number_input("Összeg (Ft)", min_value=0, step=500, key="osszeg_input")
-    datum = st.date_input("Dátum", value=date.today(), key="datum_input")
+    megnevezes = st.text_input("Mire vonatkozik?" if kategoria == "Tartozás" else "Mit vettetek? (pl. Lidl)")
+    osszeg = st.number_input("Összeg (Ft)", min_value=0, step=500)
+    datum = st.date_input("Dátum", value=date.today())
 
     if st.button("💾 Rögzítés a felhőbe", use_container_width=True, type="primary"):
         if kategoria == "Tartozás" and (not ki_tartozik or not kinek_tartozik):
             hangeffekt("hiba")
-            st.toast("⚠️ Add meg, ki tartozik kinek!", icon="⚠️")
             st.warning("Írd be mindkét fél nevét a tartozásnál!")
         elif not megnevezes or osszeg <= 0:
             hangeffekt("hiba")
-            st.toast("⚠️ Írd be a megnevezést és az összeget!", icon="⚠️")
             st.warning("Írd be a megnevezést és egy 0-nál nagyobb összeget!")
         else:
-            vegleges_megnevezes = (
-                f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if kategoria == "Tartozás" else megnevezes
-            )
-            with st.spinner("Mentés a Google Táblázatba..."):
-                uj_sor = [str(datum), ki, kategoria, vegleges_megnevezes, int(osszeg)]
-                sheet.append_row(uj_sor)
-            
+            vegleges_nev = f"{megnevezes} ({ki_tartozik} → {kinek_tartozik})" if kategoria == "Tartozás" else megnevezes
+            with st.spinner("Mentés..."):
+                sheet.append_row([str(datum), ki, kategoria, vegleges_nev, int(osszeg)])
             hangeffekt("siker")
             st.balloons()
-            st.toast(f"Sikeresen mentve: {vegleges_megnevezes}!", icon="✅")
-            st.success(f"Rögzítve: {vegleges_megnevezes} ({osszeg:,} Ft)".replace(",", " "))
+            st.toast(f"Mentve: {vegleges_nev}!", icon="✅")
             time.sleep(1.5)
             st.rerun()
 
-# 2. FÜL: KÖZÖS STATISZTIKA, TARTOZÁSOK ÉS GRAFIKON
 with tab_stat:
     if df.empty:
-        st.info("Még nincs rögzített tétel a táblázatban.")
+        st.info("Még nincs rögzített tétel.")
     else:
-        kiadasok_df = df[df["Kategória"] != "Tartozás"]
-        tartozasok_df = df[df["Kategória"] == "Tartozás"].copy()
+        kiadasok = df[df["Kategória"] != "Tartozás"]
+        tartozasok = df[df["Kategória"] == "Tartozás"].copy()
 
-        if not kiadasok_df.empty:
-            osszes = kiadasok_df["Összeg"].sum()
-            zsolt_ossz = kiadasok_df[kiadasok_df["Ki"] == "Zsolt"]["Összeg"].sum()
-            vivien_ossz = kiadasok_df[kiadasok_df["Ki"] == "Vivien"]["Összeg"].sum()
-
-            st.metric("Összes közös kiadás", f"{osszes:,.0f} Ft".replace(",", " "))
-            
-            col1, col2 = st.columns(2)
-            col1.metric("Zsolt", f"{zsolt_ossz:,.0f} Ft".replace(",", " "))
-            col2.metric("Vivien", f"{vivien_ossz:,.0f} Ft".replace(",", " "))
-
+        if not kiadasok.empty:
+            st.metric("Összes közös kiadás", f"{kiadasok['Összeg'].sum():,.0f} Ft".replace(",", " "))
+            c1, c2 = st.columns(2)
+            c1.metric("Zsolt", f"{kiadasok[kiadasok['Ki'] == 'Zsolt']['Összeg'].sum():,.0f} Ft".replace(",", " "))
+            c2.metric("Vivien", f"{kiadasok[kiadasok['Ki'] == 'Vivien']['Összeg'].sum():,.0f} Ft".replace(",", " "))
             st.divider()
-
-            kat_df = kiadasok_df.groupby("Kategória", as_index=False)["Összeg"].sum()
+            kat_df = kiadasok.groupby("Kategória", as_index=False)["Összeg"].sum()
             fig = px.pie(kat_df, values="Összeg", names="Kategória", hole=0.45, title="Kiadások megoszlása")
             fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
             st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("Még nincs rögzített közös kiadás.")
 
-        # Rögzített tartozások összesítése irányonként
-        if not tartozasok_df.empty:
+        if not tartozasok.empty:
             st.divider()
             st.subheader("💸 Rögzített tartozások")
-            
-            # Kinyerjük a "(Ki → Kinek)" irányt a megnevezés végéről
-            tartozasok_df["Irány"] = tartozasok_df["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok_df["Ki"])
-            osszesitett_tartozasok = tartozasok_df.groupby("Irány", as_index=False)["Összeg"].sum()
-
-            for _, sor in osszesitett_tartozasok.iterrows():
+            tartozasok["Irány"] = tartozasok["Megnevezés"].str.extract(r"\(([^)]+→[^)]+)\)")[0].fillna(tartozasok["Ki"])
+            for _, sor in tartozasok.groupby("Irány", as_index=False)["Összeg"].sum().iterrows():
                 st.metric(sor["Irány"], f"{sor['Összeg']:,.0f} Ft".replace(",", " "))
 
-# 3. FÜL: ELŐZMÉNYEK, TÖRLÉS ÉS FRISSÍTÉS
 with tab_lista:
     if df.empty:
         st.info("Üres a lista.")
     else:
-        megjelenitendo_df = df.iloc[::-1].drop(columns=["Sheet_Row"])
-        st.dataframe(megjelenitendo_df, use_container_width=True, hide_index=True)
-
+        st.dataframe(df.iloc[::-1].drop(columns=["Sheet_Row"]), use_container_width=True, hide_index=True)
         if st.button("🔄 Frissítés a felhőből", use_container_width=True):
             hangeffekt("frissites")
-            st.toast("Adatok frissítve!", icon="🔄")
+            st.toast("Frissítve!", icon="🔄")
             time.sleep(0.5)
             st.rerun()
-
         st.divider()
-
         with st.expander("🗑️ Tétel törlése"):
-            forditott_df = df.iloc[::-1]
-            opciok = {
-                row["Sheet_Row"]: f"{row['Dátum']} | {row['Ki']} – {row['Megnevezés']} ({row['Összeg']:,} Ft)".replace(",", " ")
-                for _, row in forditott_df.iterrows()
-            }
-
-            kivalasztott_sor = st.selectbox(
-                "Válaszd ki a törlendő tételt:",
-                options=list(opciok.keys()),
-                format_func=lambda x: opciok[x],
-            )
-
+            forditott = df.iloc[::-1]
+            opciok = {r["Sheet_Row"]: f"{r['Dátum']} | {r['Ki']} – {r['Megnevezés']} ({r['Összeg']:,} Ft)".replace(",", " ") for _, r in forditott.iterrows()}
+            valasztott = st.selectbox("Törlendő tétel:", options=list(opciok.keys()), format_func=lambda x: opciok[x])
             if st.button("🗑️ Kiválasztott tétel végleges törlése", type="primary", use_container_width=True):
-                with st.spinner("Törlés a Google Táblázatból..."):
-                    sheet.delete_rows(int(kivalasztott_sor))
+                with st.spinner("Törlés..."):
+                    sheet.delete_rows(int(valasztott))
                 hangeffekt("torles")
                 st.toast("Tétel törölve!", icon="🗑️")
-                st.success("A tétel sikeresen törölve lett!")
                 time.sleep(1.0)
                 st.rerun()
