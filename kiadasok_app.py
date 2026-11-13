@@ -10,6 +10,22 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Közös pénzügyek 🍂", page_icon="🍂", layout="wide")
 
+# Itt tudod bármikor testre szabni a titkos szerelmes üzenetedet Viviennek:
+TITKOS_UZENET_CIM = "Drága Vivienem ❤️"
+TITKOS_UZENET_SZOVEG = """
+Ha ezt most olvasod, megtaláltad a kis titkos rejtekhelyünket ebben az alkalmazásban. 🍂✨<br><br>
+Nemcsak a közös pénzügyeinket és a mindennapjainkat szeretem veled építeni, hanem minden egyes közös pillanatot, nevetést és csendet is melletted. Te vagy a legjobb dolog, ami velem történt, és végtelenül hálás vagyok azért, hogy vagy nekem.<br><br>
+<b>Nagyon-nagyon szeretlek, ma, holnap és mindörökké! 💕</b>
+"""
+
+if "titkos_mod" not in st.session_state:
+    st.session_state["titkos_mod"] = False
+
+# Titkos URL paraméter figyelése (amikor a fejlécben a 🍂 ikonra 5-ször rábök)
+if st.query_params.get("secret") == "vivien":
+    st.session_state["titkos_mod"] = True
+    st.query_params.clear()
+
 if st.session_state.pop("reset_uj_tetel", False):
     st.session_state["uj_tetel_osszeg"] = ""
 if st.session_state.pop("reset_uj_hitel", False):
@@ -110,6 +126,15 @@ st.markdown(
         align-items: center;
         gap: 8px;
     }
+    .secret-leaf-trigger {
+        cursor: pointer;
+        user-select: none;
+        display: inline-block;
+        transition: transform 0.15s ease;
+    }
+    .secret-leaf-trigger:active {
+        transform: scale(1.25) rotate(12deg);
+    }
     .top-nav-sub {
         font-size: 0.76rem;
         color: #cbd5e1;
@@ -164,6 +189,52 @@ st.markdown(
     }
     .top-nav-badge-neg .top-nav-badge-val {
         color: #fcd34d;
+    }
+
+    /* Titkos romantikus mód stílusai */
+    .love-hero-card {
+        background: linear-gradient(145deg, rgba(66, 16, 36, 0.86), rgba(32, 15, 38, 0.88));
+        border: 1px solid rgba(244, 114, 182, 0.48);
+        border-radius: 26px;
+        padding: 28px 24px;
+        margin: 12px auto 18px auto;
+        max-width: 680px;
+        text-align: center;
+        backdrop-filter: blur(18px);
+        box-shadow: 0 16px 45px rgba(225, 29, 72, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+        position: relative;
+        overflow: hidden;
+    }
+    .love-hearts-row {
+        font-size: 1.8rem;
+        letter-spacing: 8px;
+        margin-bottom: 10px;
+        animation: pulseHeart 2.2s ease-in-out infinite;
+    }
+    @keyframes pulseHeart {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+    }
+    .love-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #fbcfe8, #fda4af, #fde68a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 16px;
+    }
+    .love-body {
+        font-size: 1.06rem;
+        line-height: 1.72;
+        color: #ffe4e6;
+        font-weight: 400;
+        margin-bottom: 18px;
+    }
+    .love-sign {
+        font-size: 0.96rem;
+        font-weight: 700;
+        color: #fbcfe8;
+        margin-top: 8px;
     }
 
     [data-testid="stTabs"] [role="tablist"] {
@@ -444,8 +515,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-def globalis_gomb_hang():
-    """Azonnali, finom UI-kattanás minden gomb, fül, kategória és opció megérintésekor."""
+def globalis_gomb_hang_es_titok():
+    """Azonnali UI-kattanás minden gombra + 5x koppintásos titkos mód figyelő a 🍂 ikonon."""
     components.html(
         """<script>
         (function() {
@@ -480,7 +551,25 @@ def globalis_gomb_hang():
                     } catch (err) {}
                 }
 
+                let leafTaps = 0;
+                let leafTimer = null;
+
                 pDoc.addEventListener('pointerdown', function(e) {
+                    const leaf = e.target.closest('#secret-leaf-btn');
+                    if (leaf) {
+                        playClick();
+                        leafTaps++;
+                        clearTimeout(leafTimer);
+                        leafTimer = setTimeout(function() { leafTaps = 0; }, 2200);
+                        if (leafTaps >= 5) {
+                            leafTaps = 0;
+                            const url = new URL(pWin.location.href);
+                            url.searchParams.set('secret', 'vivien');
+                            pWin.location.href = url.toString();
+                        }
+                        return;
+                    }
+
                     const target = e.target.closest(
                         'button, [role="tab"], [role="radio"], [role="option"], [data-baseweb="radio"], [data-testid="stExpander"] summary'
                     );
@@ -494,7 +583,113 @@ def globalis_gomb_hang():
         height=0,
     )
 
-globalis_gomb_hang()
+globalis_gomb_hang_es_titok()
+
+def romantikus_zene_lejatszo():
+    """Végtelenített, lágy romantikus zongora-ballada Web Audio szintetizátorral + vezérlőgombbal."""
+    components.html(
+        """<div style="display:flex; justify-content:center; margin-top:4px;">
+            <button id="love-music-btn" style="
+                background: linear-gradient(135deg, rgba(244, 63, 94, 0.78), rgba(217, 70, 239, 0.68));
+                border: 1px solid rgba(251, 207, 232, 0.65);
+                color: #fff1f2;
+                font-family: sans-serif;
+                font-size: 0.92rem;
+                font-weight: 700;
+                padding: 10px 22px;
+                border-radius: 999px;
+                cursor: pointer;
+                box-shadow: 0 6px 20px rgba(244, 63, 94, 0.35);
+            ">🎵 Romantikus zene lejátszása / megállítása</button>
+        </div>
+        <script>
+        (function() {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            let ctx = null;
+            let playing = false;
+            let loopTimer = null;
+
+            // Lágy, romantikus F-dúr ballada akkordbontás (Fmaj7 -> C/E -> Dm7 -> Bbmaj7)
+            const melody = [
+                [349.23, 0.0, 1.4], [440.00, 0.45, 1.3], [523.25, 0.90, 1.4], [659.25, 1.35, 1.8],
+                [587.33, 2.2, 0.9], [523.25, 2.7, 1.5],
+                [329.63, 3.6, 1.4], [392.00, 4.05, 1.3], [523.25, 4.50, 1.4], [587.33, 4.95, 1.8],
+                [523.25, 5.8, 0.9], [440.00, 6.3, 1.5],
+                [293.66, 7.2, 1.4], [349.23, 7.65, 1.3], [440.00, 8.10, 1.4], [523.25, 8.55, 1.8],
+                [493.88, 9.4, 0.9], [440.00, 9.9, 1.5],
+                [233.08, 10.8, 1.4], [349.23, 11.25, 1.3], [440.00, 11.70, 1.4], [523.25, 12.15, 2.0],
+                [440.00, 13.1, 1.6]
+            ];
+
+            function playPianoNote(freq, startOffset, dur) {
+                if (!ctx || !playing) return;
+                const now = ctx.currentTime + startOffset;
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc1.type = 'sine';
+                osc2.type = 'triangle';
+                osc1.frequency.setValueAtTime(freq, now);
+                osc2.frequency.setValueAtTime(freq * 2, now);
+
+                const subGain = ctx.createGain();
+                subGain.gain.setValueAtTime(0.035, now);
+
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(0.14, now + 0.06);
+                gain.gain.exponentialRampToValueAtTime(0.0008, now + dur + 0.6);
+
+                osc1.connect(gain);
+                osc2.connect(subGain);
+                subGain.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + dur + 0.7);
+                osc2.stop(now + dur + 0.7);
+            }
+
+            function scheduleLoop() {
+                if (!playing) return;
+                melody.forEach(n => playPianoNote(n[0], n[1], n[2]));
+                loopTimer = setTimeout(scheduleLoop, 14600);
+            }
+
+            function startMusic() {
+                if (!ctx) ctx = new Ctx();
+                if (ctx.state === 'suspended') ctx.resume();
+                if (playing) return;
+                playing = true;
+                btn.innerText = "⏸️ Zene szüneteltetése (szól a dallam 💕)";
+                scheduleLoop();
+            }
+
+            function stopMusic() {
+                playing = false;
+                clearTimeout(loopTimer);
+                btn.innerText = "🎵 Romantikus zene indítása";
+            }
+
+            const btn = document.getElementById('love-music-btn');
+            btn.addEventListener('click', function() {
+                if (playing) stopMusic();
+                else startMusic();
+            });
+
+            // Automatikus indítási kísérlet megnyitáskor
+            try {
+                startMusic();
+                if (ctx && ctx.state === 'suspended') {
+                    stopMusic();
+                }
+            } catch (e) {}
+        })();
+        </script>""",
+        height=56,
+    )
 
 def hangeffekt(tipus="siker"):
     components.html(
@@ -528,6 +723,25 @@ def hangeffekt(tipus="siker"):
         }} catch (e) {{}}</script>""",
         height=0,
     )
+
+# --- TITKOS ROMANTIKUS NÉZET ---
+if st.session_state.get("titkos_mod", False):
+    st.markdown(
+        f"""<div class="love-hero-card">
+            <div class="love-hearts-row">💖 ✨ 🍂 ✨ 💖</div>
+            <div class="love-title">{TITKOS_UZENET_CIM}</div>
+            <div class="love-body">{TITKOS_UZENET_SZOVEG}</div>
+            <div class="love-sign">— Örökké a tiéd, Zsolt ❤️</div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    romantikus_zene_lejatszo()
+    st.write("")
+    _, c_vissza, _ = st.columns([1.2, 1.4, 1.2])
+    if c_vissza.button("🔙 Vissza a pénzügyekhez", use_container_width=True):
+        st.session_state["titkos_mod"] = False
+        st.rerun()
+    st.stop()
 
 def fmt_ft(ertek):
     return f"{int(ertek):,}".replace(",", ".")
@@ -634,7 +848,7 @@ ma_fejlec = date.today()
 badge_osztaly = "top-nav-badge" if aktualis_egyenleg >= 0 else "top-nav-badge-neg"
 
 st.markdown(
-    f'<div class="top-nav-hero"><div><div class="top-nav-title">🍂 Közös pénzügyek</div><div class="top-nav-sub">Zsolt &amp; Vivien • {ma_fejlec.year}. {HONAP_NEVEK[ma_fejlec.month - 1]} {ma_fejlec.day}.</div></div><div class="top-nav-right"><span class="device-pill"></span><div class="{badge_osztaly}"><span class="top-nav-badge-label">Kassza egyenleg</span><span class="top-nav-badge-val">{fmt_ft(aktualis_egyenleg)} Ft</span></div></div></div>',
+    f'<div class="top-nav-hero"><div><div class="top-nav-title"><span id="secret-leaf-btn" class="secret-leaf-trigger" title="">🍂</span> Közös pénzügyek</div><div class="top-nav-sub">Zsolt &amp; Vivien • {ma_fejlec.year}. {HONAP_NEVEK[ma_fejlec.month - 1]} {ma_fejlec.day}.</div></div><div class="top-nav-right"><span class="device-pill"></span><div class="{badge_osztaly}"><span class="top-nav-badge-label">Kassza egyenleg</span><span class="top-nav-badge-val">{fmt_ft(aktualis_egyenleg)} Ft</span></div></div></div>',
     unsafe_allow_html=True,
 )
 
@@ -697,6 +911,12 @@ with tab_uj:
         datum = st.date_input("Dátum", value=date.today())
 
         if st.button("🍂 Rögzítés a felhőbe", use_container_width=True, type="primary"):
+            # Titkos kód ellenőrzése a megnevezésben
+            if megnevezes.strip().lower() in ["vivien", "szeretlek", "titok", "❤️"]:
+                st.session_state["titkos_mod"] = True
+                hangeffekt("siker")
+                st.rerun()
+
             if tipus == "➕ Bevétel" and not ki:
                 hangeffekt("hiba")
                 st.warning("Add meg, kitől származik a bevétel!")
