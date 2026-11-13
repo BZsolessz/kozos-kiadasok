@@ -216,22 +216,77 @@ st.markdown(
         border-radius: 999px;
         margin-left: 6px;
     }
-    .torles-kartya {
-        background: rgba(16, 26, 24, 0.72);
-        border: 1px solid rgba(251, 191, 36, 0.22);
+
+    /* Modern előzmény kártyák */
+    .tx-summary-bar {
+        background: rgba(13, 22, 20, 0.65);
+        border: 1px solid rgba(251, 191, 36, 0.20);
         border-radius: 14px;
-        padding: 10px 14px;
-        margin-bottom: 6px;
-        backdrop-filter: blur(10px);
+        padding: 9px 14px;
+        margin: 6px 0 12px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.84rem;
+        color: #cbd5e1;
     }
-    .torles-kartya-aktiv {
-        background: rgba(127, 29, 29, 0.38);
+    .tx-card {
+        background: linear-gradient(135deg, rgba(16, 26, 24, 0.82), rgba(12, 20, 18, 0.76));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-left: 4px solid #f59e0b;
+        border-radius: 15px;
+        padding: 11px 14px;
+        margin-bottom: 4px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+    .tx-card-bev { border-left-color: #10b981; }
+    .tx-card-hitel { border-left-color: #38bdf8; }
+    .tx-card-tart { border-left-color: #f43f5e; }
+    .tx-card-del {
+        background: rgba(127, 29, 29, 0.42);
         border: 1px solid rgba(248, 113, 113, 0.65);
-        border-radius: 14px;
-        padding: 10px 14px;
-        margin-bottom: 6px;
+        border-left: 4px solid #ef4444;
         box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
     }
+    .tx-title {
+        font-size: 0.98rem;
+        font-weight: 600;
+        color: #f8fafc;
+        line-height: 1.25;
+    }
+    .tx-meta {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+    }
+    .tx-pill {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        color: #e2e8f0;
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-size: 0.71rem;
+    }
+    .tx-amount {
+        font-size: 1.02rem;
+        font-weight: 700;
+        white-space: nowrap;
+        text-align: right;
+    }
+    .tx-amt-ki { color: #fbbf24; }
+    .tx-amt-bev { color: #34d399; }
+    .tx-amt-hitel { color: #7dd3fc; }
+    .tx-amt-tart { color: #fda4af; }
+
     [data-baseweb="popover"], [data-baseweb="menu"], ul[role="listbox"] {
         max-height: 55vh !important;
         overflow-y: auto !important;
@@ -293,13 +348,6 @@ def osszeg_mezo(cimke, key, alap_ertek=0):
     if ertek > 0:
         st.caption(f"💰 Rögzítendő összeg: **{fmt_ft(ertek)} Ft**")
     return ertek
-
-def formazott_tabla(resz_df, kategoria_szoveg_csere=None):
-    megj = resz_df.iloc[::-1].drop(columns=["Sheet_Row", "Ev_Honap"], errors="ignore").copy()
-    if kategoria_szoveg_csere:
-        megj["Kategória"] = megj["Kategória"].str.replace(kategoria_szoveg_csere, "", regex=False)
-    megj["Összeg"] = megj["Összeg"].apply(lambda x: f"{fmt_ft(x)} Ft")
-    return megj
 
 def parse_datum(datum_ertek):
     tisztitott = re.sub(r"[.\s/]+", "-", str(datum_ertek).strip()).strip("-")
@@ -668,108 +716,136 @@ with tab_hitel:
 
 with tab_lista:
     if df.empty:
-        st.info("Üres a lista.")
+        st.info("Még nincs rögzített tétel.")
     else:
-        bevetel_elozmenyek = df[df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
-        tartozas_elozmenyek = df[df["Kategória"] == "Tartozás"].copy()
-        hitel_elozmenyek = df[df["Kategória"].isin(["Hitel: Keret", "Hitel: Törlesztés"])].copy()
-        kiadas_elozmenyek = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
-
-        st.subheader("➖ Kiadások")
-        if kiadas_elozmenyek.empty:
-            st.caption("Nincs rögzített kiadás.")
-        else:
-            elerheto_kategoriak = ["Összes"] + sorted(kiadas_elozmenyek["Kategória"].unique().tolist())
-            valasztott_kat = st.pills(
-                "Kategória szűrő",
-                elerheto_kategoriak,
-                default="Összes",
-                key="elozmenyek_kat_szuro",
-            ) or "Összes"
-            szurt_kiadas = kiadas_elozmenyek if valasztott_kat == "Összes" else kiadas_elozmenyek[kiadas_elozmenyek["Kategória"] == valasztott_kat]
-            st.dataframe(formazott_tabla(szurt_kiadas), use_container_width=True, hide_index=True)
-
-        st.divider()
-
-        st.subheader("➕ Bevételek")
-        if bevetel_elozmenyek.empty:
-            st.caption("Nincs rögzített bevétel.")
-        else:
-            st.dataframe(formazott_tabla(bevetel_elozmenyek, "Bevétel: "), use_container_width=True, hide_index=True)
-
-        st.divider()
-
-        if not tartozas_elozmenyek.empty:
-            st.subheader("💸 Tartozások")
-            st.dataframe(formazott_tabla(tartozas_elozmenyek), use_container_width=True, hide_index=True)
-            st.divider()
-
-        st.subheader("🏦 Hitelek és törlesztések")
-        if hitel_elozmenyek.empty:
-            st.caption("Nincs rögzített hitel vagy törlesztés.")
-        else:
-            hitel_elozmenyek["Kategória"] = hitel_elozmenyek["Kategória"].str.replace("Hitel: ", "", regex=False)
-            st.dataframe(formazott_tabla(hitel_elozmenyek), use_container_width=True, hide_index=True)
-
-        st.divider()
-
-        if st.button("🔄 Frissítés a felhőből", use_container_width=True):
+        hdr_c1, hdr_c2 = st.columns([3.4, 1.3], vertical_alignment="center")
+        hdr_c1.subheader("📜 Tranzakciók")
+        if hdr_c2.button("🔄 Frissítés", use_container_width=True):
             adatok_betoltese.clear()
             hangeffekt("frissites")
             st.toast("Frissítve!", icon="🔄")
             time.sleep(0.4)
             st.rerun()
 
-        st.divider()
+        szekcio_tipus = st.pills(
+            "Típus",
+            ["Összes", "➖ Kiadások", "➕ Bevételek", "💸 Tartozások", "🏦 Hitelek"],
+            default="Összes",
+            key="elozmenyek_tipus_szuro",
+            label_visibility="collapsed",
+        ) or "Összes"
 
-        st.subheader("🗑️ Tételek kezelése és törlése")
-        kereso = st.text_input("🔍 Gyorskereső (név, kategória vagy dátum)", placeholder="pl. Lidl, Zsolt, Hitel...", key="torles_kereso").strip().lower()
-        forditott = df.iloc[::-1]
+        szurt_df = df.iloc[::-1].copy()
+        if szekcio_tipus == "➖ Kiadások":
+            szurt_df = szurt_df[(~szurt_df["Kategória"].str.startswith("Bevétel:", na=False)) & (~szurt_df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))]
+        elif szekcio_tipus == "➕ Bevételek":
+            szurt_df = szurt_df[szurt_df["Kategória"].str.startswith("Bevétel:", na=False)]
+        elif szekcio_tipus == "💸 Tartozások":
+            szurt_df = szurt_df[szurt_df["Kategória"] == "Tartozás"]
+        elif szekcio_tipus == "🏦 Hitelek":
+            szurt_df = szurt_df[szurt_df["Kategória"].isin(["Hitel: Keret", "Hitel: Törlesztés"])]
+
+        if szekcio_tipus == "➖ Kiadások" and not szurt_df.empty:
+            elerheto_kat = ["Minden kategória"] + sorted(szurt_df["Kategória"].unique().tolist())
+            val_kat = st.pills(
+                "Kategória",
+                elerheto_kat,
+                default="Minden kategória",
+                key="elozmenyek_kat_szuro",
+                label_visibility="collapsed",
+            ) or "Minden kategória"
+            if val_kat != "Minden kategória":
+                szurt_df = szurt_df[szurt_df["Kategória"] == val_kat]
+
+        kereso = st.text_input(
+            "Keresés",
+            placeholder="🔍 Keresés név, kategória, fizető vagy dátum alapján...",
+            key="elozmenyek_kereso",
+            label_visibility="collapsed",
+        ).strip().lower()
+
         if kereso:
             maszk = (
-                forditott["Megnevezés"].astype(str).str.lower().str.contains(kereso, na=False)
-                | forditott["Kategória"].astype(str).str.lower().str.contains(kereso, na=False)
-                | forditott["Ki"].astype(str).str.lower().str.contains(kereso, na=False)
-                | forditott["Dátum"].astype(str).str.lower().str.contains(kereso, na=False)
+                szurt_df["Megnevezés"].astype(str).str.lower().str.contains(kereso, na=False)
+                | szurt_df["Kategória"].astype(str).str.lower().str.contains(kereso, na=False)
+                | szurt_df["Ki"].astype(str).str.lower().str.contains(kereso, na=False)
+                | szurt_df["Dátum"].astype(str).str.lower().str.contains(kereso, na=False)
             )
-            forditott = forditott[maszk]
+            szurt_df = szurt_df[maszk]
 
-        megerositendo_sor = st.session_state.get("torles_megerosites_sor")
+        talalat_db = len(szurt_df)
+        talalat_osszeg = int(szurt_df["Összeg"].sum()) if not szurt_df.empty else 0
+        st.markdown(
+            f"""<div class="tx-summary-bar">
+                <span>📋 <b>{talalat_db}</b> tétel megjelenítve</span>
+                <span>Összesen: <b style="color:#f8fafc;">{fmt_ft(talalat_osszeg)} Ft</b></span>
+            </div>""",
+            unsafe_allow_html=True,
+        )
 
-        for _, r in forditott.head(15).iterrows():
-            sor_id = int(r["Sheet_Row"])
-            aktiv = (megerositendo_sor == sor_id)
-            kartya_osztaly = "torles-kartya-aktiv" if aktiv else "torles-kartya"
-            kat_tiszta = str(r["Kategória"]).replace("Bevétel: ", "")
-            nev_tiszta = str(r["Megnevezés"]).split("|")[0].strip()
+        if szurt_df.empty:
+            st.info("Nincs a szűrésnek megfelelő tétel.")
+        else:
+            max_elem = 30 if (kereso or szekcio_tipus != "Összes") else 20
+            megerositendo_sor = st.session_state.get("torles_megerosites_sor")
 
-            k_col1, k_col2 = st.columns([4, 1.4], vertical_alignment="center")
-            with k_col1:
-                st.markdown(
-                    f"""<div class="{kartya_osztaly}">
-                        <div style="font-size:0.78rem; color:#cbd5e1;">📅 {r['Dátum']} • <b>{r['Ki']}</b> • {kat_tiszta}</div>
-                        <div style="font-size:1.0rem; font-weight:600; color:#f8fafc; margin-top:2px;">{nev_tiszta} — <span style="color:#fbbf24;">{fmt_ft(r['Összeg'])} Ft</span></div>
-                    </div>""",
-                    unsafe_allow_html=True,
-                )
-            with k_col2:
-                if not aktiv:
-                    if st.button("🗑️", key=f"del_btn_{sor_id}", use_container_width=True, help="Tétel törlése"):
-                        st.session_state["torles_megerosites_sor"] = sor_id
-                        st.rerun()
+            for _, r in szurt_df.head(max_elem).iterrows():
+                sor_id = int(r["Sheet_Row"])
+                kat_nyers = str(r["Kategória"])
+                aktiv = (megerositendo_sor == sor_id)
+
+                if kat_nyers.startswith("Bevétel:"):
+                    card_cls, amt_cls, elojel = "tx-card tx-card-bev", "tx-amount tx-amt-bev", "+"
+                    kat_cimke = kat_nyers.replace("Bevétel: ", "")
+                elif kat_nyers.startswith("Hitel:"):
+                    card_cls, amt_cls, elojel = "tx-card tx-card-hitel", "tx-amount tx-amt-hitel", ""
+                    kat_cimke = kat_nyers.replace("Hitel: ", "Hitel • ")
+                elif kat_nyers == "Tartozás":
+                    card_cls, amt_cls, elojel = "tx-card tx-card-tart", "tx-amount tx-amt-tart", ""
+                    kat_cimke = "Tartozás"
                 else:
-                    if st.button("✅ Biztos?", key=f"conf_del_{sor_id}", type="primary", use_container_width=True):
-                        with st.spinner("Törlés..."):
-                            sheet.delete_rows(sor_id)
-                        st.session_state["torles_megerosites_sor"] = None
-                        adatok_betoltese.clear()
-                        hangeffekt("torles")
-                        st.toast("Tétel véglegesen törölve!", icon="🗑️")
-                        time.sleep(0.6)
-                        st.rerun()
-                    if st.button("✖️ Mégse", key=f"canc_del_{sor_id}", use_container_width=True):
-                        st.session_state["torles_megerosites_sor"] = None
-                        st.rerun()
+                    card_cls, amt_cls, elojel = "tx-card", "tx-amount tx-amt-ki", "−"
+                    kat_cimke = kat_nyers
 
-        if len(forditott) > 15:
-            st.caption(f"A legutóbbi 15 tétel látható. Használd a fenti gyorskeresőt a régebbi tételek megtalálásához (összesen {len(forditott)} találat).")
+                if aktiv:
+                    card_cls += " tx-card-del"
+
+                nev_tiszta = str(r["Megnevezés"]).split("|")[0].strip()
+
+                c_card, c_act = st.columns([5.2, 1.1], vertical_alignment="center")
+                with c_card:
+                    st.markdown(
+                        f"""<div class="{card_cls}">
+                            <div style="min-width:0;">
+                                <div class="tx-title">{nev_tiszta}</div>
+                                <div class="tx-meta">
+                                    <span class="tx-pill">{kat_cimke}</span>
+                                    <span>👤 {r['Ki']}</span>
+                                    <span>• {r['Dátum']}</span>
+                                </div>
+                            </div>
+                            <div class="{amt_cls}">{elojel}{fmt_ft(r['Összeg'])} Ft</div>
+                        </div>""",
+                        unsafe_allow_html=True,
+                    )
+                with c_act:
+                    if not aktiv:
+                        if st.button("🗑️", key=f"del_btn_{sor_id}", use_container_width=True, help="Tétel törlése"):
+                            st.session_state["torles_megerosites_sor"] = sor_id
+                            st.rerun()
+                    else:
+                        if st.button("✅", key=f"conf_del_{sor_id}", type="primary", use_container_width=True, help="Végleges törlés"):
+                            with st.spinner("Törlés..."):
+                                sheet.delete_rows(sor_id)
+                            st.session_state["torles_megerosites_sor"] = None
+                            adatok_betoltese.clear()
+                            hangeffekt("torles")
+                            st.toast("Tétel törölve!", icon="🗑️")
+                            time.sleep(0.5)
+                            st.rerun()
+                        if st.button("✖️", key=f"canc_del_{sor_id}", use_container_width=True, help="Mégse"):
+                            st.session_state["torles_megerosites_sor"] = None
+                            st.rerun()
+
+            if talalat_db > max_elem:
+                st.caption(f"A legutóbbi {max_elem} tétel látható (összesen {talalat_db}). Használd a keresőt vagy a típus-szűrőt a régebbi tételekhez.")
