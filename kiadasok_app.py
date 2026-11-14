@@ -31,6 +31,8 @@ if st.session_state.pop("reset_uj_tetel", False):
 if st.session_state.pop("reset_uj_hitel", False):
     for k in ["uj_hitel_teljes", "uj_hitel_jelenlegi", "uj_hitel_havi"]:
         st.session_state[k] = ""
+if st.session_state.pop("reset_alberlet_tetel", False):
+    st.session_state["alb_tetel_osszeg"] = ""
 
 st.markdown(
     """<style>
@@ -245,12 +247,12 @@ st.markdown(
         gap: 4px !important;
         backdrop-filter: blur(14px) !important;
         display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
+        grid-template-columns: repeat(5, 1fr) !important;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
     }
     [data-testid="stTabs"] [role="tab"] {
         border-radius: 11px !important;
-        padding: 8px 4px !important;
+        padding: 8px 3px !important;
         margin: 0 !important;
         justify-content: center !important;
         color: #cbd5e1 !important;
@@ -258,10 +260,15 @@ st.markdown(
         border: 1px solid transparent !important;
     }
     [data-testid="stTabs"] [role="tab"] p {
-        font-size: 0.84rem !important;
+        font-size: 0.80rem !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
         margin: 0 !important;
+    }
+    @media (max-width: 540px) {
+        [data-testid="stTabs"] [role="tab"] p {
+            font-size: 0.71rem !important;
+        }
     }
     [data-testid="stTabs"] [role="tab"]:hover {
         background: rgba(255, 255, 255, 0.05) !important;
@@ -435,6 +442,34 @@ st.markdown(
         margin-left: 5px;
     }
 
+    /* Albérlet kártyák */
+    .alb-status-ok {
+        background: rgba(16, 185, 129, 0.16);
+        border: 1px solid rgba(52, 211, 153, 0.42);
+        color: #6ee7b7;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 700;
+    }
+    .alb-status-warn {
+        background: rgba(245, 158, 11, 0.18);
+        border: 1px solid rgba(251, 191, 36, 0.45);
+        color: #fcd34d;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 700;
+    }
+    .meter-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(56, 189, 248, 0.24);
+        border-left: 4px solid #38bdf8;
+        border-radius: 13px;
+        padding: 9px 12px;
+        margin-bottom: 8px;
+    }
+
     .tx-summary-bar {
         background: rgba(13, 22, 20, 0.65);
         border: 1px solid rgba(251, 191, 36, 0.20);
@@ -464,6 +499,7 @@ st.markdown(
     .tx-card-bev { border-left-color: #10b981; }
     .tx-card-hitel { border-left-color: #38bdf8; }
     .tx-card-tart { border-left-color: #f43f5e; }
+    .tx-card-alb { border-left-color: #a855f7; }
     .tx-card-del {
         background: rgba(127, 29, 29, 0.42);
         border: 1px solid rgba(248, 113, 113, 0.65);
@@ -503,6 +539,7 @@ st.markdown(
     .tx-amt-bev { color: #34d399; }
     .tx-amt-hitel { color: #7dd3fc; }
     .tx-amt-tart { color: #fda4af; }
+    .tx-amt-alb { color: #d8b4fe; }
 
     [data-baseweb="popover"], [data-baseweb="menu"], ul[role="listbox"] {
         max-height: 55vh !important;
@@ -514,6 +551,7 @@ st.markdown(
     </style>""",
     unsafe_allow_html=True,
 )
+
 
 def globalis_gomb_hang_es_titok():
     """Azonnali UI-kattanás minden gombra + 5x koppintásos titkos mód figyelő a 🍂 ikonon."""
@@ -583,7 +621,9 @@ def globalis_gomb_hang_es_titok():
         height=0,
     )
 
+
 globalis_gomb_hang_es_titok()
+
 
 def romantikus_zene_lejatszo():
     """Végtelenített, lágy romantikus zongora-ballada Web Audio szintetizátorral + vezérlőgombbal."""
@@ -610,7 +650,6 @@ def romantikus_zene_lejatszo():
             let playing = false;
             let loopTimer = null;
 
-            // Lágy, romantikus F-dúr ballada akkordbontás (Fmaj7 -> C/E -> Dm7 -> Bbmaj7)
             const melody = [
                 [349.23, 0.0, 1.4], [440.00, 0.45, 1.3], [523.25, 0.90, 1.4], [659.25, 1.35, 1.8],
                 [587.33, 2.2, 0.9], [523.25, 2.7, 1.5],
@@ -679,7 +718,6 @@ def romantikus_zene_lejatszo():
                 else startMusic();
             });
 
-            // Automatikus indítási kísérlet megnyitáskor
             try {
                 startMusic();
                 if (ctx && ctx.state === 'suspended') {
@@ -690,6 +728,7 @@ def romantikus_zene_lejatszo():
         </script>""",
         height=56,
     )
+
 
 def hangeffekt(tipus="siker"):
     components.html(
@@ -724,6 +763,7 @@ def hangeffekt(tipus="siker"):
         height=0,
     )
 
+
 # --- TITKOS ROMANTIKUS NÉZET ---
 if st.session_state.get("titkos_mod", False):
     st.markdown(
@@ -743,8 +783,10 @@ if st.session_state.get("titkos_mod", False):
         st.rerun()
     st.stop()
 
+
 def fmt_ft(ertek):
     return f"{int(ertek):,}".replace(",", ".")
+
 
 def osszeg_mezo(cimke, key, alap_ertek=0):
     if key not in st.session_state:
@@ -760,6 +802,7 @@ def osszeg_mezo(cimke, key, alap_ertek=0):
     if ertek > 0:
         st.caption(f"💰 Rögzítendő összeg: **{fmt_ft(ertek)} Ft**")
     return ertek
+
 
 def kategoria_racs_valaszto(opciok_lista, state_key):
     if state_key not in st.session_state or st.session_state[state_key] not in [o[0] for o in opciok_lista]:
@@ -789,9 +832,11 @@ def kategoria_racs_valaszto(opciok_lista, state_key):
     )
     return st.session_state[state_key]
 
+
 def parse_datum(datum_ertek):
     tisztitott = re.sub(r"[.\s/]+", "-", str(datum_ertek).strip()).strip("-")
     return pd.to_datetime(tisztitott, errors="coerce")
+
 
 def datum_e_honapban_van_e(datum_ertek, ev, honap):
     dt = parse_datum(datum_ertek)
@@ -799,7 +844,9 @@ def datum_e_honapban_van_e(datum_ertek, ev, honap):
         return False
     return dt.year == ev and dt.month == honap
 
+
 HONAP_NEVEK = ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"]
+
 
 def honap_cimke(ym_str):
     try:
@@ -807,6 +854,7 @@ def honap_cimke(ym_str):
         return f"{ev}. {HONAP_NEVEK[int(ho) - 1]}"
     except Exception:
         return ym_str
+
 
 @st.cache_resource
 def csatlakozas_sheetshez():
@@ -817,11 +865,13 @@ def csatlakozas_sheetshez():
         creds = Credentials.from_service_account_file("kulcs.json", scopes=scopes)
     return gspread.authorize(creds).open("Kozos_Kiadasok").sheet1
 
+
 try:
     sheet = csatlakozas_sheetshez()
 except Exception as e:
     st.error(f"Csatlakozási hiba: {e}")
     st.stop()
+
 
 @st.cache_data(ttl=60, show_spinner=False)
 def adatok_betoltese():
@@ -835,11 +885,22 @@ def adatok_betoltese():
     df["Ev_Honap"] = dt_sorozat.apply(lambda d: f"{d.year}-{d.month:02d}" if pd.notna(d) else "Ismeretlen")
     return df
 
+
 df = adatok_betoltese()
+
+# Kategóriák, amelyek NEM számítanak bele a kassza egyenlegbe és a havi kiadás-statisztikába:
+KIZART_KATEGORIAK = [
+    "Tartozás",
+    "Hitel: Keret",
+    "Hitel: Törlesztés",
+    "Albérlet: Beállítás",
+    "Albérlet: Óraállás",
+    "Albérlet: Csak napló",
+]
 
 if not df.empty:
     _bev = df[df["Kategória"].str.startswith("Bevétel:", na=False)]["Összeg"].sum()
-    _ki = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))]["Összeg"].sum()
+    _ki = df[(~df["Kategória"].str.startswith("Bevétel:", na=False)) & (~df["Kategória"].isin(KIZART_KATEGORIAK))]["Összeg"].sum()
     aktualis_egyenleg = int(_bev - _ki)
 else:
     aktualis_egyenleg = 0
@@ -852,8 +913,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab_uj, tab_stat, tab_hitel, tab_lista = st.tabs(["🍁 Új tétel", "📊 Statisztika", "🏦 Hitel", "📜 Előzmények"])
+tab_uj, tab_stat, tab_alb, tab_hitel, tab_lista = st.tabs(
+    ["🍁 Új tétel", "📊 Statisztika", "🏠 Albérlet", "🏦 Hitel", "📜 Előzmények"]
+)
 
+# ==============================================================================
+# 1. FÜL: ÚJ TÉTEL
+# ==============================================================================
 with tab_uj:
     col_uj_bal, col_uj_jobb = st.columns([1.25, 1], gap="large")
     with col_uj_bal:
@@ -911,7 +977,6 @@ with tab_uj:
         datum = st.date_input("Dátum", value=date.today())
 
         if st.button("🍂 Rögzítés a felhőbe", use_container_width=True, type="primary"):
-            # Titkos kód ellenőrzése a megnevezésben
             if megnevezes.strip().lower() in ["vivien", "szeretlek", "titok", "❤️"]:
                 st.session_state["titkos_mod"] = True
                 hangeffekt("siker")
@@ -937,11 +1002,14 @@ with tab_uj:
                 time.sleep(0.9)
                 st.rerun()
 
+# ==============================================================================
+# 2. FÜL: STATISZTIKA
+# ==============================================================================
 with tab_stat:
     if df.empty:
         st.info("Még nincs rögzített tétel.")
     else:
-        nem_hitel_df = df[~df["Kategória"].isin(["Hitel: Keret", "Hitel: Törlesztés"])]
+        nem_hitel_df = df[~df["Kategória"].isin(KIZART_KATEGORIAK)]
         elerheto_honapok = sorted([h for h in nem_hitel_df["Ev_Honap"].unique() if h != "Ismeretlen"], reverse=True)
 
         if len(elerheto_honapok) > 1:
@@ -963,7 +1031,7 @@ with tab_stat:
 
         bevetelek = stat_df[stat_df["Kategória"].str.startswith("Bevétel:", na=False)].copy()
         tartozasok = stat_df[stat_df["Kategória"] == "Tartozás"].copy()
-        kiadasok = stat_df[(~stat_df["Kategória"].str.startswith("Bevétel:", na=False)) & (~stat_df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))].copy()
+        kiadasok = stat_df[(~stat_df["Kategória"].str.startswith("Bevétel:", na=False)) & (~stat_df["Kategória"].isin(KIZART_KATEGORIAK))].copy()
 
         ossz_bevetel = int(bevetelek["Összeg"].sum()) if not bevetelek.empty else 0
         ossz_kiadas = int(kiadasok["Összeg"].sum()) if not kiadasok.empty else 0
@@ -1086,6 +1154,298 @@ with tab_stat:
                     unsafe_allow_html=True,
                 )
 
+# ==============================================================================
+# 3. FÜL: ALBÉRLET
+# ==============================================================================
+with tab_alb:
+    ma_alb = date.today()
+
+    # Albérlet alapadatok kiolvasása (a legutóbbi "Albérlet: Beállítás" sorból)
+    alb_beallitas_df = df[df["Kategória"] == "Albérlet: Beállítás"].copy()
+    alap_berleti_dij = 0
+    alap_kaucio = 0
+    alap_fizetesi_nap = 10
+    alap_foberlo = ""
+    alap_megjegyzes = ""
+
+    if not alb_beallitas_df.empty:
+        utolso_beall = alb_beallitas_df.iloc[-1]
+        alap_berleti_dij = int(utolso_beall["Összeg"])
+        for r in str(utolso_beall["Megnevezés"]).split("|"):
+            r = r.strip()
+            if r.startswith("kaucio:"):
+                try:
+                    alap_kaucio = int(r.replace("kaucio:", "").strip())
+                except ValueError:
+                    alap_kaucio = 0
+            elif r.startswith("nap:"):
+                try:
+                    alap_fizetesi_nap = int(r.replace("nap:", "").strip())
+                except ValueError:
+                    alap_fizetesi_nap = 10
+            elif r.startswith("foberlo:"):
+                alap_foberlo = r.replace("foberlo:", "").strip()
+            elif r.startswith("megj:"):
+                alap_megjegyzes = r.replace("megj:", "").strip()
+
+    # Albérlettel kapcsolatos pénzügyi tételek szűrése
+    alb_penz_maszk = (
+        (df["Kategória"] == "Lakhatás & Rezsi")
+        | (df["Kategória"] == "Albérlet: Csak napló")
+        | (df["Megnevezés"].astype(str).str.startswith("Albérlet:", na=False))
+    )
+    alb_penz_df = df[alb_penz_maszk].copy()
+
+    ehavi_alb_df = alb_penz_df[alb_penz_df["Dátum"].apply(lambda d: datum_e_honapban_van_e(d, ma_alb.year, ma_alb.month))]
+    ehavi_alb_osszeg = int(ehavi_alb_df["Összeg"].sum()) if not ehavi_alb_df.empty else 0
+    ossz_alb_osszeg = int(alb_penz_df["Összeg"].sum()) if not alb_penz_df.empty else 0
+
+    ehavi_berleti_fizetve = False
+    if not ehavi_alb_df.empty:
+        ehavi_berleti_fizetve = ehavi_alb_df["Megnevezés"].astype(str).str.lower().str.contains("bérleti díj|lakbér|albérlet", na=False).any()
+
+    st.subheader("🏠 Albérlet & Rezsi központ")
+
+    statusz_badge = (
+        '<span class="alb-status-ok">✅ E havi lakbér rögzítve</span>'
+        if ehavi_berleti_fizetve
+        else f'<span class="alb-status-warn">⏳ Fizetési nap: minden hó {alap_fizetesi_nap}.</span>'
+    )
+
+    fob_sor = f"<span>👤 Főbérlő: <b>{alap_foberlo}</b></span>" if alap_foberlo else ""
+    megj_sor = f"<div style='font-size:0.78rem; color:#94a3b8; margin-top:6px;'>📝 {alap_megjegyzes}</div>" if alap_megjegyzes else ""
+
+    st.markdown(
+        f"""<div class="stat-glass-card">
+            <div class="stat-card-header">
+                <span>🏡 Lakás áttekintés ({HONAP_NEVEK[ma_alb.month - 1]})</span>
+                {statusz_badge}
+            </div>
+            <div class="stat-kpi-grid">
+                <div class="stat-kpi-box">
+                    <div class="stat-kpi-lbl">🔑 Alap bérleti díj</div>
+                    <div class="stat-kpi-num" style="color:#fbbf24;">{fmt_ft(alap_berleti_dij)} Ft</div>
+                </div>
+                <div class="stat-kpi-box">
+                    <div class="stat-kpi-lbl">📅 E havi lakhatás</div>
+                    <div class="stat-kpi-num" style="color:#34d399;">{fmt_ft(ehavi_alb_osszeg)} Ft</div>
+                </div>
+                <div class="stat-kpi-box">
+                    <div class="stat-kpi-lbl">🛡️ Letett kaució</div>
+                    <div class="stat-kpi-num" style="color:#7dd3fc;">{fmt_ft(alap_kaucio)} Ft</div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:0.80rem; color:#cbd5e1; margin-top:10px;">
+                {fob_sor}
+                <span>📊 Összes rögzített albérlet költség: <b>{fmt_ft(ossz_alb_osszeg)} Ft</b></span>
+            </div>
+            {megj_sor}
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
+    alb_al_nezet = st.pills(
+        "Albérlet nézet",
+        ["💳 Befizetés rögzítése", "⚡ Mérőóra állások", "📜 Albérlet napló", "⚙️ Lakás adatai"],
+        default="💳 Befizetés rögzítése",
+        key="alb_al_nezet_valaszto",
+        label_visibility="collapsed",
+    ) or "💳 Befizetés rögzítése"
+
+    # --- 3/A. ALBÉRLET BEFIZETÉS RÖGZÍTÉSE ---
+    if alb_al_nezet == "💳 Befizetés rögzítése":
+        c_alb1, c_alb2 = st.columns([1.15, 1], gap="large")
+        with c_alb1:
+            alb_tipusok = [
+                ("Bérleti díj", "🔑 Bérleti díj"),
+                ("Közös költség", "🏢 Közös költség"),
+                ("Villany számla", "⚡ Villany számla"),
+                ("Gáz / Fűtés számla", "🔥 Gáz / Fűtés"),
+                ("Víz / Csatorna", "💧 Víz / Csatorna"),
+                ("Internet & TV", "📶 Internet & TV"),
+                ("Javítás / Felszerelés", "🛠️ Javítás / Felszerelés"),
+                ("Egyéb rezsi", "📦 Egyéb rezsi"),
+            ]
+            val_alb_tipus = kategoria_racs_valaszto(alb_tipusok, "valasztott_alb_tipus")
+
+        with c_alb2:
+            alb_ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True, key="alb_ki_fizette")
+            alb_megj = st.text_input(
+                "Megjegyzés / Időszak",
+                placeholder=f"pl. {ma_alb.year}. {HONAP_NEVEK[ma_alb.month - 1]} havi",
+                key="alb_megj_input",
+            ).strip()
+
+            alapertelmezett_osszeg = alap_berleti_dij if (val_alb_tipus == "Bérleti díj" and alap_berleti_dij > 0) else 0
+            if st.session_state.get("utolso_alb_tipus") != val_alb_tipus:
+                st.session_state["utolso_alb_tipus"] = val_alb_tipus
+                st.session_state["alb_tetel_osszeg"] = fmt_ft(alapertelmezett_osszeg) if alapertelmezett_osszeg > 0 else ""
+
+            alb_osszeg = osszeg_mezo("Összeg (Ft)", key="alb_tetel_osszeg", alap_ertek=alapertelmezett_osszeg)
+            alb_datum = st.date_input("Befizetés dátuma", value=date.today(), key="alb_befiz_datum")
+
+            kasszabol_levon = st.checkbox(
+                "💰 Levonom a közös kasszából és számolja a havi statisztika is",
+                value=True,
+                key="alb_kasszabol_cb",
+            )
+
+            if st.button("🏠 Albérlet tétel mentése", use_container_width=True, type="primary"):
+                if alb_osszeg <= 0:
+                    hangeffekt("hiba")
+                    st.warning("Adj meg 0-nál nagyobb összeget!")
+                else:
+                    teljes_nev = f"Albérlet: {val_alb_tipus}" + (f" ({alb_megj})" if alb_megj else "")
+                    cel_kategoria = "Lakhatás & Rezsi" if kasszabol_levon else "Albérlet: Csak napló"
+                    with st.spinner("Mentés..."):
+                        sheet.append_row([str(alb_datum), alb_ki, cel_kategoria, teljes_nev, int(alb_osszeg)])
+                    st.session_state["reset_alberlet_tetel"] = True
+                    adatok_betoltese.clear()
+                    hangeffekt("siker")
+                    st.toast(f"Mentve: {teljes_nev} ({fmt_ft(alb_osszeg)} Ft)!", icon="🏠")
+                    time.sleep(0.9)
+                    st.rerun()
+
+    # --- 3/B. MÉRŐÓRA ÁLLÁSOK ---
+    elif alb_al_nezet == "⚡ Mérőóra állások":
+        ora_df = df[df["Kategória"] == "Albérlet: Óraállás"].copy()
+
+        m_col1, m_col2 = st.columns([1, 1.15], gap="large")
+        with m_col1:
+            st.markdown("#### 📝 Új óraállás diktálása")
+            ora_tipus = st.selectbox(
+                "Melyik mérőóra?",
+                ["⚡ Villanyóra (kWh)", "🔥 Gázóra (m³)", "💧 Hideg vízóra (m³)", "♨️ Meleg vízóra (m³)"],
+                key="ora_tipus_sel",
+            )
+            ora_allas = st.number_input("Aktuális óraállás", min_value=0, step=1, key="ora_allas_num")
+            ora_datum = st.date_input("Leolvasás dátuma", value=date.today(), key="ora_datum_inp")
+            ora_megj = st.text_input("Megjegyzés (opcionális)", placeholder="pl. Fotózva, diktálva MVM-nek", key="ora_megj_inp").strip()
+
+            if st.button("💾 Óraállás rögzítése", use_container_width=True, type="primary"):
+                if ora_allas <= 0:
+                    hangeffekt("hiba")
+                    st.warning("Írj be 0-nál nagyobb óraállást!")
+                else:
+                    ora_szoveg = f"{ora_tipus}" + (f" | {ora_megj}" if ora_megj else "")
+                    with st.spinner("Rögzítés..."):
+                        sheet.append_row([str(ora_datum), "Zsolt", "Albérlet: Óraállás", ora_szoveg, int(ora_allas)])
+                    adatok_betoltese.clear()
+                    hangeffekt("siker")
+                    st.toast(f"Óraállás rögzítve: {ora_tipus} – {ora_allas}", icon="⚡")
+                    time.sleep(0.9)
+                    st.rerun()
+
+        with m_col2:
+            st.markdown("#### 📊 Legutóbbi leolvasások & fogyasztás")
+            if ora_df.empty:
+                st.info("Még nincs rögzített mérőóra állás.")
+            else:
+                ora_df["Ora_Nev"] = ora_df["Megnevezés"].astype(str).apply(lambda x: x.split("|")[0].strip())
+                for o_nev in ora_df["Ora_Nev"].unique():
+                    sub_o = ora_df[ora_df["Ora_Nev"] == o_nev].copy()
+                    utolso_sor = sub_o.iloc[-1]
+                    utolso_ertek = int(utolso_sor["Összeg"])
+                    utolso_datum = str(utolso_sor["Dátum"])
+
+                    fogyasztas_html = ""
+                    if len(sub_o) >= 2:
+                        elozo_ertek = int(sub_o.iloc[-2]["Összeg"])
+                        kulonbseg = utolso_ertek - elozo_ertek
+                        if kulonbseg >= 0:
+                            fogyasztas_html = f"<span style='color:#6ee7b7; font-size:0.78rem;'>(+{fmt_ft(kulonbseg)} az előző óta)</span>"
+
+                    st.markdown(
+                        f"""<div class="meter-card">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <b>{o_nev}</b>
+                                <span style="font-size:1.05rem; font-weight:700; color:#7dd3fc;">{fmt_ft(utolso_ertek)}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:0.76rem; color:#94a3b8;">
+                                <span>📅 Utolsó leolvasás: {utolso_datum}</span>
+                                {fogyasztas_html}
+                            </div>
+                        </div>""",
+                        unsafe_allow_html=True,
+                    )
+
+    # --- 3/C. ALBÉRLET NAPLÓ (BEFIZETÉSEK + ÓRAÁLLÁSOK) ---
+    elif alb_al_nezet == "📜 Albérlet napló":
+        alb_osszes_df = df[
+            alb_penz_maszk | (df["Kategória"] == "Albérlet: Óraállás")
+        ].iloc[::-1].copy()
+
+        if alb_osszes_df.empty:
+            st.info("Még nincs rögzített albérleti tétel vagy óraállás.")
+        else:
+            megerositendo_alb_sor = st.session_state.get("torles_megerosites_sor")
+            for _, r in alb_osszes_df.head(20).iterrows():
+                sor_id = int(r["Sheet_Row"])
+                kat_nyers = str(r["Kategória"])
+                aktiv = (megerositendo_alb_sor == sor_id)
+                is_ora = (kat_nyers == "Albérlet: Óraállás")
+
+                card_cls = "tx-card tx-card-hitel" if is_ora else "tx-card tx-card-alb"
+                if aktiv:
+                    card_cls += " tx-card-del"
+
+                amt_cls = "tx-amount tx-amt-hitel" if is_ora else "tx-amount tx-amt-alb"
+                ertek_szoveg = f"{fmt_ft(r['Összeg'])} állás" if is_ora else f"−{fmt_ft(r['Összeg'])} Ft"
+                jelveny = "Mérőóra" if is_ora else ("Kasszából" if kat_nyers == "Lakhatás & Rezsi" else "Csak napló")
+
+                c_card, c_act = st.columns([5.2, 1.1], vertical_alignment="center")
+                with c_card:
+                    st.markdown(
+                        f'<div class="{card_cls}"><div style="min-width:0;"><div class="tx-title">{r["Megnevezés"]}</div><div class="tx-meta"><span class="tx-pill">{jelveny}</span><span>👤 {r["Ki"]}</span><span>• {r["Dátum"]}</span></div></div><div class="{amt_cls}">{ertek_szoveg}</div></div>',
+                        unsafe_allow_html=True,
+                    )
+                with c_act:
+                    if not aktiv:
+                        if st.button("🗑️", key=f"alb_del_{sor_id}", use_container_width=True):
+                            st.session_state["torles_megerosites_sor"] = sor_id
+                            st.rerun()
+                    else:
+                        if st.button("✅", key=f"alb_conf_{sor_id}", type="primary", use_container_width=True):
+                            with st.spinner("Törlés..."):
+                                sheet.delete_rows(sor_id)
+                            st.session_state["torles_megerosites_sor"] = None
+                            adatok_betoltese.clear()
+                            hangeffekt("torles")
+                            st.toast("Törölve!", icon="🗑️")
+                            time.sleep(0.5)
+                            st.rerun()
+                        if st.button("✖️", key=f"alb_canc_{sor_id}", use_container_width=True):
+                            st.session_state["torles_megerosites_sor"] = None
+                            st.rerun()
+
+    # --- 3/D. LAKÁS ADATAI & KAUCIÓ BEÁLLÍTÁS ---
+    elif alb_al_nezet == "⚙️ Lakás adatai":
+        st.markdown("#### ⚙️ Albérlet alapadatok rögzítése / módosítása")
+        uj_berleti_dij = osszeg_mezo("Havi bérleti díj (Ft)", key="beall_berleti_dij", alap_ertek=alap_berleti_dij)
+        uj_kaucio = osszeg_mezo("Letett kaució összege (Ft)", key="beall_kaucio", alap_ertek=alap_kaucio)
+        uj_fiz_nap = st.number_input(
+            "Fizetési határnap (minden hónap hányadikán?)",
+            min_value=1,
+            max_value=31,
+            value=int(alap_fizetesi_nap),
+            key="beall_fiz_nap",
+        )
+        uj_foberlo = st.text_input("Főbérlő neve / telefonszáma / számlaszáma", value=alap_foberlo, key="beall_fob").strip()
+        uj_megj = st.text_input("Megjegyzés (pl. Cím, szerződés lejárata, közös képviselő)", value=alap_megjegyzes, key="beall_megj").strip()
+
+        if st.button("💾 Lakás adatainak mentése", use_container_width=True, type="primary"):
+            meta_str = f"Albérlet adatok | kaucio:{int(uj_kaucio)} | nap:{int(uj_fiz_nap)} | foberlo:{uj_foberlo} | megj:{uj_megj}"
+            with st.spinner("Mentés..."):
+                sheet.append_row([str(date.today()), "Zsolt", "Albérlet: Beállítás", meta_str, int(uj_berleti_dij)])
+            adatok_betoltese.clear()
+            hangeffekt("siker")
+            st.toast("Albérlet adatai frissítve!", icon="🏡")
+            time.sleep(0.9)
+            st.rerun()
+
+# ==============================================================================
+# 4. FÜL: HITEL
+# ==============================================================================
 with tab_hitel:
     st.subheader("🏦 Hitel és törlesztés követő")
     hitel_keretek = df[df["Kategória"] == "Hitel: Keret"].copy()
@@ -1217,6 +1577,9 @@ with tab_hitel:
                 time.sleep(0.9)
                 st.rerun()
 
+# ==============================================================================
+# 5. FÜL: ELŐZMÉNYEK
+# ==============================================================================
 with tab_lista:
     if df.empty:
         st.info("Még nincs rögzített tétel.")
@@ -1232,7 +1595,7 @@ with tab_lista:
 
         szekcio_tipus = st.pills(
             "Típus",
-            ["Összes", "➖ Kiadások", "➕ Bevételek", "💸 Tartozások", "🏦 Hitelek"],
+            ["Összes", "➖ Kiadások", "➕ Bevételek", "🏠 Albérlet", "💸 Tartozások", "🏦 Hitelek"],
             default="Összes",
             key="elozmenyek_tipus_szuro",
             label_visibility="collapsed",
@@ -1240,9 +1603,15 @@ with tab_lista:
 
         szurt_df = df.iloc[::-1].copy()
         if szekcio_tipus == "➖ Kiadások":
-            szurt_df = szurt_df[(~szurt_df["Kategória"].str.startswith("Bevétel:", na=False)) & (~szurt_df["Kategória"].isin(["Tartozás", "Hitel: Keret", "Hitel: Törlesztés"]))]
+            szurt_df = szurt_df[(~szurt_df["Kategória"].str.startswith("Bevétel:", na=False)) & (~szurt_df["Kategória"].isin(KIZART_KATEGORIAK))]
         elif szekcio_tipus == "➕ Bevételek":
             szurt_df = szurt_df[szurt_df["Kategória"].str.startswith("Bevétel:", na=False)]
+        elif szekcio_tipus == "🏠 Albérlet":
+            szurt_df = szurt_df[
+                (szurt_df["Kategória"] == "Lakhatás & Rezsi")
+                | (szurt_df["Kategória"].str.startswith("Albérlet:", na=False))
+                | (szurt_df["Megnevezés"].astype(str).str.startswith("Albérlet:", na=False))
+            ]
         elif szekcio_tipus == "💸 Tartozások":
             szurt_df = szurt_df[szurt_df["Kategória"] == "Tartozás"]
         elif szekcio_tipus == "🏦 Hitelek":
@@ -1300,6 +1669,9 @@ with tab_lista:
                 elif kat_nyers.startswith("Hitel:"):
                     card_cls, amt_cls, elojel = "tx-card tx-card-hitel", "tx-amount tx-amt-hitel", ""
                     kat_cimke = kat_nyers.replace("Hitel: ", "Hitel • ")
+                elif kat_nyers.startswith("Albérlet:"):
+                    card_cls, amt_cls, elojel = "tx-card tx-card-alb", "tx-amount tx-amt-alb", ""
+                    kat_cimke = kat_nyers.replace("Albérlet: ", "Albérlet • ")
                 elif kat_nyers == "Tartozás":
                     card_cls, amt_cls, elojel = "tx-card tx-card-tart", "tx-amount tx-amt-tart", ""
                     kat_cimke = "Tartozás"
