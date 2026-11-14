@@ -365,6 +365,8 @@ st.markdown(
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
     }
     .stat-kpi-grid {
         display: grid;
@@ -767,12 +769,7 @@ def hangeffekt(tipus="siker"):
 # --- TITKOS ROMANTIKUS NÉZET ---
 if st.session_state.get("titkos_mod", False):
     st.markdown(
-        f"""<div class="love-hero-card">
-            <div class="love-hearts-row">💖 ✨ 🍂 ✨ 💖</div>
-            <div class="love-title">{TITKOS_UZENET_CIM}</div>
-            <div class="love-body">{TITKOS_UZENET_SZOVEG}</div>
-            <div class="love-sign">— Örökké a tiéd, Zsolt ❤️</div>
-        </div>""",
+        f'<div class="love-hero-card"><div class="love-hearts-row">💖 ✨ 🍂 ✨ 💖</div><div class="love-title">{TITKOS_UZENET_CIM}</div><div class="love-body">{TITKOS_UZENET_SZOVEG}</div><div class="love-sign">— Örökké a tiéd, Zsolt ❤️</div></div>',
         unsafe_allow_html=True,
     )
     romantikus_zene_lejatszo()
@@ -1213,34 +1210,10 @@ with tab_alb:
     )
 
     fob_sor = f"<span>👤 Főbérlő: <b>{alap_foberlo}</b></span>" if alap_foberlo else ""
-    megj_sor = f"<div style='font-size:0.78rem; color:#94a3b8; margin-top:6px;'>📝 {alap_megjegyzes}</div>" if alap_megjegyzes else ""
+    megj_sor = f'<div style="font-size:0.78rem; color:#94a3b8; margin-top:6px;">📝 {alap_megjegyzes}</div>' if alap_megjegyzes else ""
 
     st.markdown(
-        f"""<div class="stat-glass-card">
-            <div class="stat-card-header">
-                <span>🏡 Lakás áttekintés ({HONAP_NEVEK[ma_alb.month - 1]})</span>
-                {statusz_badge}
-            </div>
-            <div class="stat-kpi-grid">
-                <div class="stat-kpi-box">
-                    <div class="stat-kpi-lbl">🔑 Alap bérleti díj</div>
-                    <div class="stat-kpi-num" style="color:#fbbf24;">{fmt_ft(alap_berleti_dij)} Ft</div>
-                </div>
-                <div class="stat-kpi-box">
-                    <div class="stat-kpi-lbl">📅 E havi lakhatás</div>
-                    <div class="stat-kpi-num" style="color:#34d399;">{fmt_ft(ehavi_alb_osszeg)} Ft</div>
-                </div>
-                <div class="stat-kpi-box">
-                    <div class="stat-kpi-lbl">🛡️ Letett kaució</div>
-                    <div class="stat-kpi-num" style="color:#7dd3fc;">{fmt_ft(alap_kaucio)} Ft</div>
-                </div>
-            </div>
-            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:0.80rem; color:#cbd5e1; margin-top:10px;">
-                {fob_sor}
-                <span>📊 Összes rögzített albérlet költség: <b>{fmt_ft(ossz_alb_osszeg)} Ft</b></span>
-            </div>
-            {megj_sor}
-        </div>""",
+        f'<div class="stat-glass-card"><div class="stat-card-header"><span>🏡 Lakás áttekintés ({HONAP_NEVEK[ma_alb.month - 1]})</span>{statusz_badge}</div><div class="stat-kpi-grid"><div class="stat-kpi-box"><div class="stat-kpi-lbl">🔑 Alap bérleti díj</div><div class="stat-kpi-num" style="color:#fbbf24;">{fmt_ft(alap_berleti_dij)} Ft</div></div><div class="stat-kpi-box"><div class="stat-kpi-lbl">📅 E havi lakhatás</div><div class="stat-kpi-num" style="color:#34d399;">{fmt_ft(ehavi_alb_osszeg)} Ft</div></div><div class="stat-kpi-box"><div class="stat-kpi-lbl">🛡️ Letett kaució</div><div class="stat-kpi-num" style="color:#7dd3fc;">{fmt_ft(alap_kaucio)} Ft</div></div></div><div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:0.80rem; color:#cbd5e1; margin-top:10px;">{fob_sor}<span>📊 Összes rögzített albérlet költség: <b>{fmt_ft(ossz_alb_osszeg)} Ft</b></span></div>{megj_sor}</div>',
         unsafe_allow_html=True,
     )
 
@@ -1353,19 +1326,10 @@ with tab_alb:
                         elozo_ertek = int(sub_o.iloc[-2]["Összeg"])
                         kulonbseg = utolso_ertek - elozo_ertek
                         if kulonbseg >= 0:
-                            fogyasztas_html = f"<span style='color:#6ee7b7; font-size:0.78rem;'>(+{fmt_ft(kulonbseg)} az előző óta)</span>"
+                            fogyasztas_html = f'<span style="color:#6ee7b7; font-size:0.78rem;">(+{fmt_ft(kulonbseg)} az előző óta)</span>'
 
                     st.markdown(
-                        f"""<div class="meter-card">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <b>{o_nev}</b>
-                                <span style="font-size:1.05rem; font-weight:700; color:#7dd3fc;">{fmt_ft(utolso_ertek)}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:0.76rem; color:#94a3b8;">
-                                <span>📅 Utolsó leolvasás: {utolso_datum}</span>
-                                {fogyasztas_html}
-                            </div>
-                        </div>""",
+                        f'<div class="meter-card"><div style="display:flex; justify-content:space-between; align-items:center;"><b>{o_nev}</b><span style="font-size:1.05rem; font-weight:700; color:#7dd3fc;">{fmt_ft(utolso_ertek)}</span></div><div style="display:flex; justify-content:space-between; margin-top:4px; font-size:0.76rem; color:#94a3b8;"><span>📅 Utolsó leolvasás: {utolso_datum}</span>{fogyasztas_html}</div></div>',
                         unsafe_allow_html=True,
                     )
 
