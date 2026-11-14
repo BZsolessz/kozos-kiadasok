@@ -57,7 +57,6 @@ st.markdown(
         --text-muted: #94a3b8;
     }
 
-    /* Streamlit alapértelmezett chrome elrejtése a natív app érzetért */
     #MainMenu, footer, header[data-testid="stHeader"], [data-testid="stToolbar"],
     [data-testid="stDecoration"], .stDeployButton, [data-testid="stStatusWidget"] {
         display: none !important;
@@ -83,13 +82,12 @@ st.markdown(
         background-attachment: fixed !important;
     }
 
-    /* Konténer: mobilon teljes szélesség, alul hely az alsó navigációnak */
     .block-container {
         max-width: 640px !important;
         padding-top: 0.75rem !important;
         padding-left: 0.85rem !important;
         padding-right: 0.85rem !important;
-        padding-bottom: 6.2rem !important;
+        padding-bottom: 3.5rem !important;
         margin: 0 auto !important;
     }
 
@@ -98,8 +96,8 @@ st.markdown(
         background: linear-gradient(135deg, rgba(17, 29, 26, 0.90), rgba(24, 19, 14, 0.88));
         border: 1px solid rgba(251, 191, 36, 0.26);
         border-radius: 20px;
-        padding: 12px 16px;
-        margin-bottom: 14px;
+        padding: 11px 15px;
+        margin-bottom: 10px;
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -114,7 +112,7 @@ st.markdown(
         gap: 10px;
     }
     .leaf-btn {
-        font-size: 1.55rem;
+        font-size: 1.50rem;
         line-height: 1;
         cursor: pointer;
         user-select: none;
@@ -126,7 +124,7 @@ st.markdown(
     }
     .leaf-btn:active { transform: scale(1.2) rotate(15deg); }
     .app-title {
-        font-size: 1.05rem;
+        font-size: 1.02rem;
         font-weight: 700;
         color: #f8fafc;
         line-height: 1.2;
@@ -165,33 +163,20 @@ st.markdown(
     }
     .balance-chip-neg .balance-val { color: #fcd34d; }
 
-    /* Fix alsó mobil navigációs sáv */
-    .bottom-nav-wrap {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 99999;
-        display: flex;
-        justify-content: center;
-        padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)) 10px;
-        background: linear-gradient(to top, rgba(7, 12, 11, 0.96) 72%, rgba(7, 12, 11, 0));
-        pointer-events: none;
-    }
-    .bottom-nav-bar {
-        pointer-events: auto;
+    /* Felső kompakt mobilos menüsáv (biztonságos távolságban az Android gomboktól) */
+    .top-nav-bar {
         width: 100%;
-        max-width: 610px;
-        background: rgba(14, 23, 21, 0.92);
-        border: 1px solid rgba(251, 191, 36, 0.28);
-        border-radius: 22px;
+        background: rgba(14, 23, 21, 0.88);
+        border: 1px solid rgba(251, 191, 36, 0.24);
+        border-radius: 18px;
         padding: 5px;
+        margin-bottom: 14px;
         display: grid;
         grid-template-columns: repeat(5, 1fr);
         gap: 4px;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.30);
     }
     .nav-item {
         text-decoration: none !important;
@@ -200,7 +185,7 @@ st.markdown(
         align-items: center;
         justify-content: center;
         padding: 7px 2px;
-        border-radius: 16px;
+        border-radius: 13px;
         color: #94a3b8 !important;
         font-size: 0.68rem;
         font-weight: 600;
@@ -209,12 +194,12 @@ st.markdown(
         -webkit-tap-highlight-color: transparent;
     }
     .nav-item-ico {
-        font-size: 1.18rem;
+        font-size: 1.15rem;
         line-height: 1.1;
     }
     .nav-item.active {
-        background: linear-gradient(135deg, rgba(217, 119, 6, 0.38), rgba(5, 150, 105, 0.38));
-        border: 1px solid rgba(251, 191, 36, 0.52);
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.42), rgba(5, 150, 105, 0.42));
+        border: 1px solid rgba(251, 191, 36, 0.55);
         color: #ffffff !important;
         box-shadow: 0 4px 12px rgba(245, 158, 11, 0.22);
     }
@@ -280,7 +265,7 @@ st.markdown(
     }
     button:active { transform: scale(0.97) !important; }
 
-    /* Input mezők nagyítása mobilon (16px font = nincs iOS/Android auto-zoom) */
+    /* Input mezők nagyítása mobilon */
     input, [data-baseweb="input"] input, [data-baseweb="select"] {
         font-size: 16px !important;
         min-height: 44px !important;
@@ -314,7 +299,7 @@ st.markdown(
         color: #ffffff !important;
     }
 
-    /* Statisztika KPI rács (2 oszlopos mobilon) */
+    /* Statisztika KPI rács */
     .kpi-hero-box {
         background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(245, 158, 11, 0.12));
         border: 1px solid rgba(52, 211, 153, 0.30);
@@ -503,7 +488,7 @@ st.markdown(
 
 
 def globalis_gomb_hang_es_titok():
-    """Azonnali UI-kattanás + 5x koppintásos titkos mód a 🍂 ikonon + alsó menü navigáció."""
+    """Azonnali UI-kattanás + 5x koppintásos titkos mód a 🍂 ikonon."""
     components.html(
         """<script>
         (function() {
@@ -824,6 +809,24 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# --- FELSŐ MOBILOS MENÜSÁV ---
+nav_elemek = [
+    ("uj", "🍁", "Új tétel"),
+    ("stat", "📊", "Statisztika"),
+    ("alb", "🏠", "Albérlet"),
+    ("hitel", "🏦", "Hitel"),
+    ("lista", "📜", "Napló"),
+]
+nav_links_html = ""
+for key, ico, lbl in nav_elemek:
+    akt_cls = "nav-item active" if aktiv_oldal == key else "nav-item"
+    nav_links_html += f'<a class="{akt_cls}" href="?nav={key}" target="_self"><span class="nav-item-ico">{ico}</span><span>{lbl}</span></a>'
+
+st.markdown(
+    f'<nav class="top-nav-bar">{nav_links_html}</nav>',
+    unsafe_allow_html=True,
+)
+
 # ==============================================================================
 # 1. NÉZET: ÚJ TÉTEL
 # ==============================================================================
@@ -1083,10 +1086,10 @@ elif aktiv_oldal == "alb":
 
     ehavi_berleti_fizetve = False
     if not ehavi_alb_df.empty:
-        ehavi_berleti_fizetve = ehavi_alb_df["Megnevezés"].astype(str).str.lower().str.contains("bérleti díj|lakbér|albérlet", na=False).any()
+        ehavi_berleti_fizetve = ehavi_alb_df["Megnevezés"].astype(str).str.lower().str.contains("bérleti díj|lakbér|albérlet|lakhatás", na=False).any()
 
     statusz_badge = (
-        '<span class="badge-ok">✅ E havi lakbér OK</span>'
+        '<span class="badge-ok">✅ E havi lakhatás OK</span>'
         if ehavi_berleti_fizetve
         else f'<span class="badge-warn">⏳ Esedékes: {alap_fizetesi_nap}.</span>'
     )
@@ -1107,34 +1110,24 @@ elif aktiv_oldal == "alb":
         label_visibility="collapsed",
     ) or "💳 Befizetés"
 
+    # --- 3/A. CSAK LAKHATÁS / BÉRLETI DÍJ BEFIZETÉSE ---
     if alb_al_nezet == "💳 Befizetés":
-        alb_tipusok = [
-            ("Bérleti díj", "🔑 Lakbér"),
-            ("Közös költség", "🏢 Közös ktg."),
-            ("Villany számla", "⚡ Villany"),
-            ("Gáz / Fűtés számla", "🔥 Gáz/Fűtés"),
-            ("Víz / Csatorna", "💧 Víz"),
-            ("Internet & TV", "📶 Internet"),
-            ("Javítás / Felszerelés", "🛠️ Javítás"),
-            ("Egyéb rezsi", "📦 Egyéb"),
-        ]
-        val_alb_tipus = mobil_kategoria_racs(alb_tipusok, "valasztott_alb_tipus", oszlopok=4)
+        st.markdown('<div class="sec-title">🏠 Lakhatás / Bérleti díj befizetése</div>', unsafe_allow_html=True)
 
         alb_ki = st.radio("Ki fizette?", ["Zsolt", "Vivien"], horizontal=True, key="alb_ki_fizette", label_visibility="collapsed")
         alb_megj = st.text_input(
             "Megjegyzés",
-            placeholder=f"pl. {ma_alb.year}. {HONAP_NEVEK[ma_alb.month - 1]}",
+            placeholder=f"pl. {ma_alb.year}. {HONAP_NEVEK[ma_alb.month - 1]} havi lakhatás",
             key="alb_megj_input",
         ).strip()
 
-        alapertelmezett_osszeg = alap_berleti_dij if (val_alb_tipus == "Bérleti díj" and alap_berleti_dij > 0) else 0
-        if st.session_state.get("utolso_alb_tipus") != val_alb_tipus:
-            st.session_state["utolso_alb_tipus"] = val_alb_tipus
-            st.session_state["alb_tetel_osszeg"] = fmt_ft(alapertelmezett_osszeg) if alapertelmezett_osszeg > 0 else ""
+        if "alb_tetel_osszeg" not in st.session_state or st.session_state["alb_tetel_osszeg"] == "":
+            if alap_berleti_dij > 0:
+                st.session_state["alb_tetel_osszeg"] = fmt_ft(alap_berleti_dij)
 
         c_a1, c_a2 = st.columns([1.3, 1])
         with c_a1:
-            alb_osszeg = osszeg_mezo("Összeg (Ft)", key="alb_tetel_osszeg", alap_ertek=alapertelmezett_osszeg)
+            alb_osszeg = osszeg_mezo("Összeg (Ft)", key="alb_tetel_osszeg", alap_ertek=alap_berleti_dij)
         with c_a2:
             alb_datum = st.date_input("Dátum", value=date.today(), key="alb_befiz_datum")
 
@@ -1144,22 +1137,23 @@ elif aktiv_oldal == "alb":
             key="alb_kasszabol_cb",
         )
 
-        if st.button("🏠 Albérlet tétel mentése", use_container_width=True, type="primary"):
+        if st.button("🏠 Lakhatás befizetés mentése", use_container_width=True, type="primary"):
             if alb_osszeg <= 0:
                 hangeffekt("hiba")
                 st.warning("Adj meg 0-nál nagyobb összeget!")
             else:
-                teljes_nev = f"Albérlet: {val_alb_tipus}" + (f" ({alb_megj})" if alb_megj else "")
+                teljes_nev = "Albérlet: Lakhatás" + (f" ({alb_megj})" if alb_megj else "")
                 cel_kategoria = "Lakhatás & Rezsi" if kasszabol_levon else "Albérlet: Csak napló"
                 with st.spinner("Mentés..."):
                     sheet.append_row([str(alb_datum), alb_ki, cel_kategoria, teljes_nev, int(alb_osszeg)])
                 st.session_state["reset_alberlet_tetel"] = True
                 adatok_betoltese.clear()
                 hangeffekt("siker")
-                st.toast(f"Mentve: {teljes_nev}!", icon="🏠")
+                st.toast(f"Mentve: {teljes_nev} ({fmt_ft(alb_osszeg)} Ft)!", icon="🏠")
                 time.sleep(0.8)
                 st.rerun()
 
+    # --- 3/B. MÉRŐÓRÁK ---
     elif alb_al_nezet == "⚡ Mérőórák":
         ora_df = df[df["Kategória"] == "Albérlet: Óraállás"].copy()
         if not ora_df.empty:
@@ -1207,6 +1201,7 @@ elif aktiv_oldal == "alb":
                 time.sleep(0.8)
                 st.rerun()
 
+    # --- 3/C. ALBÉRLET NAPLÓ ---
     elif alb_al_nezet == "📜 Napló":
         alb_osszes_df = df[
             alb_penz_maszk | (df["Kategória"] == "Albérlet: Óraállás")
@@ -1251,6 +1246,7 @@ elif aktiv_oldal == "alb":
                             time.sleep(0.5)
                             st.rerun()
 
+    # --- 3/D. LAKÁS ADATAI ---
     elif alb_al_nezet == "⚙️ Adatok":
         uj_berleti_dij = osszeg_mezo("Havi bérleti díj (Ft)", key="beall_berleti_dij", alap_ertek=alap_berleti_dij)
         uj_kaucio = osszeg_mezo("Letett kaució (Ft)", key="beall_kaucio", alap_ertek=alap_kaucio)
@@ -1493,23 +1489,3 @@ elif aktiv_oldal == "lista":
                             st.toast("Törölve!", icon="🗑️")
                             time.sleep(0.4)
                             st.rerun()
-
-# ==============================================================================
-# FIX ALSÓ MOBIL NAVIGÁCIÓS SÁV
-# ==============================================================================
-nav_elemek = [
-    ("uj", "🍁", "Új tétel"),
-    ("stat", "📊", "Statisztika"),
-    ("alb", "🏠", "Albérlet"),
-    ("hitel", "🏦", "Hitel"),
-    ("lista", "📜", "Napló"),
-]
-nav_links_html = ""
-for key, ico, lbl in nav_elemek:
-    akt_cls = "nav-item active" if aktiv_oldal == key else "nav-item"
-    nav_links_html += f'<a class="{akt_cls}" href="?nav={key}" target="_self"><span class="nav-item-ico">{ico}</span><span>{lbl}</span></a>'
-
-st.markdown(
-    f'<div class="bottom-nav-wrap"><nav class="bottom-nav-bar">{nav_links_html}</nav></div>',
-    unsafe_allow_html=True,
-)
